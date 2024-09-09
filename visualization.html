@@ -18,15 +18,16 @@
     <link rel="stylesheet" href="css/owl.carousel.min.css" type="text/css">
     <link rel="stylesheet" href="css/slicknav.min.css" type="text/css">
     <link rel="stylesheet" href="css/style.css" type="text/css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" />
+    
+    <!-- D3.js -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
 </head>
 
 <body>
     <!-- Header Section Begin -->
     <header class="header">
-        <!-- [Header content same as research.html] -->
+        <!-- [Header content same as before] -->
     </header>
     <!-- Header Section End -->
 
@@ -56,14 +57,14 @@
                 <div class="col-lg-6">
                     <div class="visualization__text">
                         <h3>Year Interval Distribution</h3>
-                        <canvas id="yearIntervalChart"></canvas>
+                        <div id="yearIntervalChart"></div>
                         <p>Analysis of the distribution of Chinese porcelain entries by year intervals, highlighting the temporal trends in the dataset.</p>
                     </div>
                 </div>
                 <div class="col-lg-6">
                     <div class="visualization__text">
                         <h3>Count of Entries by Year Interval</h3>
-                        <canvas id="countByYearIntervalChart"></canvas>
+                        <div id="countByYearIntervalChart"></div>
                         <p>Bar chart showing the count of Chinese porcelain entries for each year interval.</p>
                     </div>
                 </div>
@@ -87,14 +88,14 @@
                 <div class="col-lg-6">
                     <div class="visualization__text">
                         <h3>Color Palette</h3>
-                        <div id="colorPalette" style="height: 50px; display: flex;"></div>
+                        <div id="colorPalette"></div>
                         <p>This color palette represents the predominant colors found in Chinese porcelain depicting ladies, as observed in European collections. Click on a color for more information.</p>
                     </div>
                 </div>
                 <div class="col-lg-6">
                     <div class="visualization__text">
                         <h3>Color Distribution</h3>
-                        <canvas id="colorDistributionChart"></canvas>
+                        <div id="colorDistributionChart"></div>
                         <p>This chart shows the distribution of colors in Chinese porcelain featuring ladies, based on the analysis of European collections.</p>
                     </div>
                 </div>
@@ -103,7 +104,7 @@
                 <div class="col-lg-12">
                     <div class="visualization__text">
                         <h3>Proportional Color Palette</h3>
-                        <div id="proportionalColorPalette" style="height: 100px;"></div>
+                        <div id="proportionalColorPalette"></div>
                         <p>This proportional color palette visualizes the relative frequency of each color in Chinese porcelain depicting ladies, as found in European collections. Click on a color segment for more information.</p>
                     </div>
                 </div>
@@ -114,7 +115,7 @@
 
     <!-- Footer Section Begin -->
     <footer class="footer">
-        <!-- [Footer content same as research.html] -->
+        <!-- [Footer content same as before] -->
     </footer>
     <!-- Footer Section End -->
 
@@ -126,8 +127,6 @@
     <script src="js/jquery.slicknav.js"></script>
     <script src="js/owl.carousel.min.js"></script>
     <script src="js/main.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
     <script>
     // Color palette for the first section (Metadata Overview)
@@ -144,12 +143,6 @@
     ];
 
     // Geographical Distribution Map
-    const map = L.map('mapContainer').setView([50.5039, 4.4699], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
-        maxZoom: 18,
-    }).addTo(map);
-
     const geographicalData = [
         { country: 'Austria', percentage: 22.4, latitude: 47.5162, longitude: 14.5501 },
         { country: 'Belgium', percentage: 19.4, latitude: 50.5039, longitude: 4.4699 },
@@ -157,170 +150,268 @@
         { country: 'Sweden', percentage: 10.7, latitude: 60.1282, longitude: 18.6435 },
     ];
 
-    geographicalData.forEach((data, index) => {
-        const marker = L.marker([data.latitude, data.longitude]).addTo(map);
-        marker.bindPopup(`<b>${data.country}</b><br>Percentage: ${data.percentage}%`);
+    // D3.js Map
+    const width = 800;
+    const height = 400;
 
-        // Add a pie chart to the popup
-        const pieChart = document.createElement('canvas');
-        pieChart.width = 200;
-        pieChart.height = 200;
-        marker.getPopup().setContent(pieChart);
+    const svg = d3.select("#mapContainer")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height);
 
-        new Chart(pieChart.getContext('2d'), {
-            type: 'pie',
-            data: {
-                labels: [data.country, 'Others'],
-                datasets: [{
-                    data: [data.percentage, 100 - data.percentage],
-                    backgroundColor: [metadataColors[index], '#C15B78']
-                }]
-            },
-            options: {
-                responsive: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
+    const projection = d3.geoMercator()
+        .center([10, 55])
+        .scale(500)
+        .translate([width / 2, height / 2]);
+
+    const path = d3.geoPath().projection(projection);
+
+    d3.json("https://raw.githubusercontent.com/leakyMirror/map-of-europe/master/TopoJSON/europe.topojson").then(function(europe) {
+        svg.append("g")
+            .selectAll("path")
+            .data(topojson.feature(europe, europe.objects.europe).features)
+            .enter()
+            .append("path")
+            .attr("d", path)
+            .attr("fill", "#ccc")
+            .attr("stroke", "#fff");
+
+        svg.selectAll("circle")
+            .data(geographicalData)
+            .enter()
+            .append("circle")
+            .attr("cx", d => projection([d.longitude, d.latitude])[0])
+            .attr("cy", d => projection([d.longitude, d.latitude])[1])
+            .attr("r", d => d.percentage)
+            .attr("fill", "red")
+            .attr("opacity", 0.7)
+            .on("mouseover", function(event, d) {
+                d3.select(this).attr("opacity", 1);
+                svg.append("text")
+                    .attr("id", "tooltip")
+                    .attr("x", projection([d.longitude, d.latitude])[0])
+                    .attr("y", projection([d.longitude, d.latitude])[1] - 10)
+                    .text(`${d.country}: ${d.percentage}%`)
+                    .attr("text-anchor", "middle");
+            })
+            .on("mouseout", function() {
+                d3.select(this).attr("opacity", 0.7);
+                svg.select("#tooltip").remove();
+            });
     });
 
     // Year Interval Distribution Chart
-    const yearIntervalCtx = document.getElementById('yearIntervalChart').getContext('2d');
-    new Chart(yearIntervalCtx, {
-        type: 'pie',
-        data: {
-            labels: ['1700-1749', '1750-1799', '1800-1849', '1850-1899', '1900-1949', '1950-1999'],
-            datasets: [{
-                data: [68.4, 6.2, 4.7, 13.8, 4.9, 2.0],
-                backgroundColor: metadataColors
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed !== null) {
-                                label += context.parsed.toFixed(1) + '%';
-                            }
-                            return label;
-                        }
-                    }
-                }
-            }
-        }
-    });
+    const yearIntervalData = [
+        { interval: '1700-1749', percentage: 2.0 },
+        { interval: '1750-1799', percentage: 6.2 },
+        { interval: '1800-1849', percentage: 4.7 },
+        { interval: '1850-1899', percentage: 13.8 },
+        { interval: '1900-1949', percentage: 4.9 },
+        { interval: '1950-1999', percentage: 68.4 }
+    ];
+
+    const yearWidth = 400;
+    const yearHeight = 400;
+    const yearRadius = Math.min(yearWidth, yearHeight) / 2;
+
+    const yearSvg = d3.select("#yearIntervalChart")
+        .append("svg")
+        .attr("width", yearWidth)
+        .attr("height", yearHeight)
+        .append("g")
+        .attr("transform", `translate(${yearWidth / 2},${yearHeight / 2})`);
+
+    const yearColor = d3.scaleOrdinal()
+        .domain(yearIntervalData.map(d => d.interval))
+        .range(metadataColors);
+
+    const pie = d3.pie()
+        .value(d => d.percentage);
+
+    const arc = d3.arc()
+        .innerRadius(0)
+        .outerRadius(yearRadius);
+
+    const yearArcs = yearSvg.selectAll("arc")
+        .data(pie(yearIntervalData))
+        .enter()
+        .append("g");
+
+    yearArcs.append("path")
+        .attr("d", arc)
+        .attr("fill", d => yearColor(d.data.interval))
+        .attr("stroke", "white")
+        .style("stroke-width", "2px");
+
+    yearArcs.append("text")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .text(d => `${d.data.interval}: ${d.data.percentage}%`)
+        .style("font-size", "12px")
+        .style("fill", "white");
 
     // Count by Year Interval Chart
-    const countByYearIntervalCtx = document.getElementById('countByYearIntervalChart').getContext('2d');
-    new Chart(countByYearIntervalCtx, {
-        type: 'bar',
-        data: {
-            labels: ['1700-1749', '1750-1799', '1800-1849', '1850-1899', '1900-1949', '1950-1999'],
-            datasets: [{
-                label: 'Count',
-                data: [752, 68, 52, 152, 54, 22],
-                backgroundColor: metadataColors
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
+    const countData = [
+        { interval: '1700-1749', count: 22 },
+        { interval: '1750-1799', count: 68 },
+        { interval: '1800-1849', count: 52 },
+        { interval: '1850-1899', count: 152 },
+        { interval: '1900-1949', count: 54 },
+        { interval: '1950-1999', count: 752 }
+    ];
+
+    const countMargin = {top: 20, right: 20, bottom: 30, left: 40};
+    const countWidth = 400 - countMargin.left - countMargin.right;
+    const countHeight = 300 - countMargin.top - countMargin.bottom;
+
+    const countSvg = d3.select("#countByYearIntervalChart")
+        .append("svg")
+        .attr("width", countWidth + countMargin.left + countMargin.right)
+        .attr("height", countHeight + countMargin.top + countMargin.bottom)
+        .append("g")
+        .attr("transform", `translate(${countMargin.left},${countMargin.top})`);
+
+    const x = d3.scaleBand()
+        .range([0, countWidth])
+        .padding(0.1);
+
+    const y = d3.scaleLinear()
+        .range([countHeight, 0]);
+
+    x.domain(countData.map(d => d.interval));
+    y.domain([0, d3.max(countData, d => d.count)]);
+
+    countSvg.selectAll(".bar")
+        .data(countData)
+        .enter().append("rect")
+        .attr("class", "bar")
+        .attr("x", d => x(d.interval))
+        .attr("width", x.bandwidth())
+        .attr("y", d => y(d.count))
+        .attr("height", d => countHeight - y(d.count))
+        .attr("fill", (d, i) => metadataColors[i % metadataColors.length]);
+
+    countSvg.append("g")
+        .attr("transform", `translate(0,${countHeight})`)
+        .call(d3.axisBottom(x));
+
+    countSvg.append("g")
+        .call(d3.axisLeft(y));
+
+    // Color Palette
+    const colorPaletteSvg = d3.select("#colorPalette")
+        .append("svg")
+        .attr("width", 400)
+        .attr("height", 50);
+
+    colorPaletteSvg.selectAll("rect")
+        .data(colorPaletteData)
+        .enter()
+        .append("rect")
+        .attr("x", (d, i) => i * (400 / colorPaletteData.length))
+        .attr("y", 0)
+        .attr("width", 400 / colorPaletteData.length)
+        .attr("height", 50)
+        .attr("fill", d => d.hex)
+        .on("click", (event, d) => {
+            alert(`Color: ${d.name}\nHex: ${d.hex}\nPercentage: ${d.percentage}%`);
+        });
+
+    // Color Distribution Chart
+    const colorDistWidth = 400;
+    const colorDistHeight = 400;
+    const colorDistRadius = Math.min(colorDistWidth, colorDistHeight) / 2;
+
+    const colorDistSvg = d3.select("#colorDistributionChart")
+        .append("svg")
+        .attr("width", colorDistWidth)
+        .attr("height", colorDistHeight)
+        .append("g")
+        .attr("transform", `translate(${colorDistWidth / 2},${colorDistHeight / 2})`);
+
+    const colorDistPie = d3.pie()
+        .value(d => d.percentage);
+
+    const colorDistArc = d3.arc()
+        .innerRadius(0)
+        .outerRadius(colorDistRadius);
+
+// Color Distribution Chart (continued)
+    const colorDistArcs = colorDistSvg.selectAll("arc")
+        .data(colorDistPie(colorPaletteData))
+        .enter()
+        .append("g");
+
+    colorDistArcs.append("path")
+        .attr("d", colorDistArc)
+        .attr("fill", d => d.data.hex)
+        .attr("stroke", "white")
+        .style("stroke-width", "2px");
+
+    colorDistArcs.append("text")
+        .attr("transform", d => `translate(${colorDistArc.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .text(d => `${d.data.name}: ${d.data.percentage.toFixed(2)}%`)
+        .style("font-size", "12px")
+        .style("fill", "white");
+
+    // Proportional Color Palette
+    const propColorWidth = 400;
+    const propColorHeight = 50;
+
+    const propColorSvg = d3.select("#proportionalColorPalette")
+        .append("svg")
+        .attr("width", propColorWidth)
+        .attr("height", propColorHeight);
+
+    let cumulative = 0;
+    colorPaletteData.forEach((color, i) => {
+        propColorSvg.append("rect")
+            .attr("x", cumulative * propColorWidth / 100)
+            .attr("y", 0)
+            .attr("width", color.percentage * propColorWidth / 100)
+            .attr("height", propColorHeight)
+            .attr("fill", color.hex)
+            .on("click", (event, d) => {
+                alert(`Color: ${color.name}\nHex: ${color.hex}\nPercentage: ${color.percentage}%`);
+            })
+            .on("mouseover", function() {
+                d3.select(this).attr("opacity", 0.8);
+            })
+            .on("mouseout", function() {
+                d3.select(this).attr("opacity", 1);
+            });
+
+        cumulative += color.percentage;
     });
 
-    // Create interactive color palette
-    const colorPalette = document.getElementById('colorPalette');
-    colorPaletteData.forEach(color => {
-        const colorBox = document.createElement('div');
-        colorBox.style.backgroundColor = color.hex;
-        colorBox.style.flex = '1';
-        colorBox.style.cursor = 'pointer';
-        colorBox.title = `${color.name}: ${color.hex}`;
-        colorBox.addEventListener('click', () => {
-            alert(`Color: ${color.name}\nHex: ${color.hex}\nPercentage: ${color.percentage}%`);
-        });
-        colorBox.addEventListener('mouseover', () => {
-            colorBox.style.opacity = '0.8';
-        });
-        colorBox.addEventListener('mouseout', () => {
-            colorBox.style.opacity = '1';
-        });
-        colorPalette.appendChild(colorBox);
+    // Add labels to the proportional color palette
+    cumulative = 0;
+    colorPaletteData.forEach((color, i) => {
+        const labelX = (cumulative + color.percentage / 2) * propColorWidth / 100;
+        propColorSvg.append("text")
+            .attr("x", labelX)
+            .attr("y", propColorHeight / 2)
+            .attr("text-anchor", "middle")
+            .attr("dominant-baseline", "central")
+            .text(color.name)
+            .style("font-size", "10px")
+            .style("fill", getContrastColor(color.hex));
+
+        cumulative += color.percentage;
     });
 
-    // Create color distribution chart
-    const colorDistributionCtx = document.getElementById('colorDistributionChart').getContext('2d');
-    new Chart(colorDistributionCtx, {
-        type: 'polarArea',
-        data: {
-            labels: colorPaletteData.map(color => color.name),
-            datasets: [{
-                data: colorPaletteData.map(color => color.percentage),
-                backgroundColor: colorPaletteData.map(color => color.hex)
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed !== null) {
-                                label += context.parsed.toFixed(2) + '%';
-                            }
-                            return label;
-                        }
-                    }
-                }
-            }
-        }
-    });
+    // Helper function to determine text color based on background
+    function getContrastColor(hexcolor) {
+        const r = parseInt(hexcolor.substr(1,2),16);
+        const g = parseInt(hexcolor.substr(3,2),16);
+        const b = parseInt(hexcolor.substr(5,2),16);
+        const yiq = ((r*299)+(g*587)+(b*114))/1000;
+        return (yiq >= 128) ? 'black' : 'white';
+    }
 
-    // Create interactive proportional color palette
-    const proportionalColorPalette = document.getElementById('proportionalColorPalette');
-    colorPaletteData.forEach(color => {
-        const colorBox = document.createElement('div');
-        colorBox.style.backgroundColor = color.hex;
-        colorBox.style.width = `${color.percentage}%`;
-        colorBox.style.height = '100%';
-        colorBox.style.float = 'left';
-        colorBox.style.cursor = 'pointer';
-        colorBox.title = `${color.name}: ${color.percentage}%`;
-        colorBox.addEventListener('click', () => {
-            alert(`Color: ${color.name}\nHex: ${color.hex}\nPercentage: ${color.percentage}%`);
-        });
-        colorBox.addEventListener('mouseover', () => {
-            colorBox.style.opacity = '0.8';
-        });
-        colorBox.addEventListener('mouseout', () => {
-            colorBox.style.opacity = '1';
-        });
-        proportionalColorPalette.appendChild(colorBox);
-    });
     </script>
 </body>
 
 </html>
+    
