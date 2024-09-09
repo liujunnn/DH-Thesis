@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Chinese Porcelain in Europe: Interactive Knowledge Map Ontology">
+    <meta name="keywords" content="Chinese porcelain, Europe, ontology, knowledge map, digital cultural heritage, interactive">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Interactive Knowledge Map Ontology - Chinese Porcelain in Europe</title>
+
+    <!-- Css Styles -->
+    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="css/font-awesome.min.css" type="text/css">
+    <link rel="stylesheet" href="css/elegant-icons.css" type="text/css">
+    <link rel="stylesheet" href="css/magnific-popup.css" type="text/css">
+    <link rel="stylesheet" href="css/nice-select.css" type="text/css">
+    <link rel="stylesheet" href="css/owl.carousel.min.css" type="text/css">
+    <link rel="stylesheet" href="css/slicknav.min.css" type="text/css">
+    <link rel="stylesheet" href="css/style.css" type="text/css">
+
+    <style>
+        .node {
+            cursor: pointer;
+        }
+
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+
+        .class-list {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+
+        .class-list ul {
+            list-style-type: none;
+            padding-left: 20px;
+        }
+
+        .class-list li {
+            cursor: pointer;
+            padding: 3px 0;
+        }
+
+        .class-list li:hover {
+            text-decoration: underline;
+        }
+
+        #knowledgeMap {
+            width: 100%;
+            height: 800px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header Section Begin -->
+    <header class="header">
+        <!-- [Header content remains the same] -->
+    </header>
+    <!-- Header Section End -->
+
+    <!-- Ontology Section Begin -->
+    <section class="porcelain-collections spad" id="ontology">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title text-center">
+                        <span>Ontology Structure</span>
+                        <h2>Chinese Porcelain in Europe Knowledge Map</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-3">
+                    <div class="ontology__text">
+                        <h3>Class Hierarchy</h3>
+                        <div class="class-list" id="classList">
+                            <!-- Class hierarchy will be populated here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-9">
+                    <div class="ontology__visualization">
+                        <h3>Interactive Knowledge Map</h3>
+                        <div id="knowledgeMap"></div>
+                        <p>Use mouse wheel to zoom in/out. Click and drag to pan the view. Click on nodes to expand/collapse.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Ontology Section End -->
+
+    <!-- Footer Section Begin -->
+    <footer class="footer">
+        <!-- [Footer content remains the same] -->
+    </footer>
+    <!-- Footer Section End -->
+
+    <!-- Js Plugins -->
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.magnific-popup.min.js"></script>
+    <script src="js/jquery.nice-select.min.js"></script>
+    <script src="js/jquery.slicknav.js"></script>
+    <script src="js/owl.carousel.min.js"></script>
+    <script src="js/main.js"></script>
+    
+    <!-- Add D3.js for visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <script>
+    // Ontology data (replace this with your actual data)
+    const ontologyData = {
+        name: "Chinese_Porcelain_in_Europe",
+        children: [
+            {
+                name: "Chinese_Ladies_Porcelain_in_Europe",
+                children: []
+            },
+            {
+                name: "DescriptiveMetadata",
+                children: [
+                    { name: "ColoredDrawing" },
+                    { name: "Decorations" },
+                    { name: "Descriptions" },
+                    { name: "FiringTechniques" },
+                    { 
+                        name: "Function",
+                        children: [
+                            { name: "FunctionCategory" },
+                            { name: "FunctionDescription" }
+                        ]
+                    },
+                    { name: "Glaze" },
+                    { name: "Inscriptions" },
+                    { 
+                        name: "Paste",
+                        children: [
+                            { name: "PasteColor" },
+                            { name: "PasteMaterial" },
+                            { 
+                                name: "Pastefiguring",
+                                children: [
+                                    { name: "PastefiguringDescription" },
+                                    { name: "PastefiguringTechniques" }
+                                ]
+                            }
+                        ]
+                    },
+                    { 
+                        name: "ProductionPlace",
+                        children: [
+                            { name: "ProductionKilnSites" },
+                            { name: "ProductionPlaceDescription" },
+                            { name: "ProductionPlaceLocation" }
+                        ]
+                    },
+                    { 
+                        name: "Shape",
+                        children: [
+                            { name: "ShapeDescription" },
+                            { name: "ShapeImage" }
+                        ]
+                    }
+                ]
+            },
+            {
+                name: "ExtendedMetadata",
+                children: [
+                    { name: "Digitalization" },
+                    { name: "Domentations" },
+                    { name: "RelatedCollections" },
+                    { name: "RelatedEvents" },
+                    { name: "RelatedPeople" }
+                ]
+            },
+            {
+                name: "Metadata_for_Management",
+                children: [
+                    { 
+                        name: "Damage",
+                        children: [
+                            { name: "CompletenessLevel" },
+                            { 
+                                name: "DamageCause",
+                                children: [
+                                    { name: "DamageDescriptions" }
+                                ]
+                            },
+                            { name: "DamagePosition" }
+                        ]
+                    },
+                    { name: "DateofStorage" },
+                    { 
+                        name: "Identifier",
+                        children: [
+                            { name: "Other_Identifiers" }
+                        ]
+                    },
+                    { name: "Level" },
+                    { 
+                        name: "Measurements",
+                        children: [
+                            { name: "Diameter" },
+                            { name: "Height" },
+                            { name: "Length" },
+                            { name: "Mass" },
+                            { name: "OtherMeasurements" },
+                            { name: "Volume" },
+                            { name: "Width" }
+                        ]
+                    },
+                    { name: "Period" },
+                    { 
+                        name: "Preservation",
+                        children: [
+                            { name: "CurrentLocation" },
+                            { name: "Custodian" },
+                            { name: "PreservationCondition" },
+                            { name: "PreservationRecords" }
+                        ]
+                    },
+                    { 
+                        name: "ProvidingInstitution",
+                        children: [
+                            { name: "ProvidingInstitutionCountry" },
+                            { name: "ProvidingInstitutionLocation" }
+                        ]
+                    },
+                    { name: "Quantity" },
+                    { 
+                        name: "Source",
+                        children: [
+                            { name: "PreviousPlace" },
+                            { name: "SourceRecords" },
+                            { name: "WayofAcquired" }
+                        ]
+                    },
+                    { 
+                        name: "Title",
+                        children: [
+                            { name: "Other_titles" },
+                            { name: "Used_Titles" }
+                        ]
+                    },
+                    { name: "TypeofTexture" }
+                ]
+            }
+        ]
+    };
+
+    // Color scheme
+    const colorScheme = d3.scaleOrdinal(d3.schemeCategory10);
+
+    // Function to create the interactive knowledge map
+    function createKnowledgeMap(data) {
+        const width = document.getElementById('knowledgeMap').clientWidth;
+        const height = 800;
+
+        const svg = d3.select("#knowledgeMap")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        const g = svg.append("g");
+
+        const zoom = d3.zoom()
+            .scaleExtent([0.1, 4])
+            .on("zoom", (event) => {
+                g.attr("transform", event.transform);
+            });
+
+        svg.call(zoom);
+
+        const simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-1000))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        const root = d3.hierarchy(data);
+        const nodes = root.descendants();
+        const links = root.links();
+
+        const link = g.selectAll(".link")
+            .data(links)
+            .enter().append("line")
+            .attr("class", "link");
+
+        const node = g.selectAll(".node")
+            .data(nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        node.append("circle")
+            .attr("r", 5)
+            .style("fill", d => colorScheme(d.depth));
+
+        node.append("text")
+            .attr("dy", ".35em")
+            .attr("x", d => d.children ? -10 : 10)
+            .style("text-anchor", d => d.children ? "end" : "start")
+            .text(d => d.data.name);
+
+        simulation
+            .nodes(nodes)
+            .on("tick", ticked);
+
+        simulation.force("link")
+            .links(links);
+
+        function ticked() {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            node
+                .attr("transform", d => `translate(${d.x},${d.y})`);
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        return node;
+    }
+
+    // Function to display the class hierarchy
+    function displayClassHierarchy(data, level = 0) {
+        let html = "<ul>";
+        const indent = "  ".repeat(level);
+        html += `<li data-name="${data.name}">${indent}${data.name}</li>`;
+        if (data.children) {
+            data.children.forEach(child => {
+                html += displayClassHierarchy(child, level + 1);
+            });
+        }
+        html += "</ul>";
+        return html;
+    }
+
+    // Create the visualization and display the class hierarchy when the page loads
+    document.addEventListener('DOMContentLoaded', (event) => {
+        const nodes = createKnowledgeMap(ontologyData);
+        document.getElementById('classList').innerHTML = displayClassHierarchy(ontologyData);
+
+        // Add click event listeners to class list items
+        document.querySelectorAll('#classList li').forEach(item => {
+            item.addEventListener('click', function() {
+                const name = this.getAttribute('data-name');
+                const node = nodes.filter(d => d.data.name === name);
+                if (node.size() > 0) {
+                    const d = node.datum();
+                    const svg = d3.select("#knowledgeMap svg");
+                    const g = svg.select("g");
+                    const transform = d3.zoomTransform(svg.node());
+                    const x = transform.invertX(d.x);
+                    const y = transform.invertY(d.y);
+                    svg.transition().duration(750).call(
+                        d3.zoom().transform,
+                        d3.zoomIdentity.translate(width / 2, height / 2).scale(transform.k).translate(-x, -y)
+                    );
+                }
+            });
+        });
+    });
+    </script>
+
+    <!-- Featured Artifact Section Begin -->
+<section class="featured-artifact spad" style="background-color: #f9f9f9;">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="section-title text-center">
+                    <span style="color: #e53637;">Ontology in Action</span>
+                    <h2 style="color: rgb(54, 97, 134);">Featured Artifact: Structured Information</h2>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="featured-artifact__img">
+                    <img src="images/cpGPgEtLPdlBtSP2bLjHE9tWe-3_Wsj7s7t8Sor5CZUdOMjZm2Q8GS_WIL6JABk_15Af8e-k4cSm8vzPRpLnIcMxc5g=s0.png" alt="Covered jar with women on a terrace and finial in the shape of a shishi" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="featured-artifact__text">
+                    <h3 style="color: rgb(54, 97, 134); margin-bottom: 20px;">Covered Jar with Women on a Terrace and Shishi Finial</h3>
+                    
+                    <div class="artifact-category" style="background-color: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <h4 style="color: rgb(35, 88, 135);">Chinese_Ladies_Porcelain_in_Europe</h4>
+                        <p style="color: #666666;">This artifact is an example of Chinese porcelain featuring depictions of women, popular in Europe.</p>
+                    </div>
+                    
+                    <div class="artifact-metadata" style="background-color: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <h4 style="color: rgb(35, 88, 135);">DescriptiveMetadata</h4>
+                        <ul style="list-style-type: none; padding-left: 0; color: #666666;">
+                            <li><strong style="color: #333333;">ColoredDrawing:</strong> Underglaze blue with overglaze red, black, and gold</li>
+                            <li><strong style="color: #333333;">Decorations:</strong> Two scenes with women in gardens, one with a rabbit and a fan, another with musical instruments</li>
+                            <li><strong style="color: #333333;">Descriptions:</strong> Drum-shaped covered jar with monster head handles</li>
+                            <li><strong style="color: #333333;">Function:</strong> Decorative and storage</li>
+                            <li><strong style="color: #333333;">Glaze:</strong> Blue and white porcelain with additional colors</li>
+                            <li><strong style="color: #333333;">ProductionPlace:</strong> China</li>
+                            <li><strong style="color: #333333;">Shape:</strong> Drum-shaped with a lid and a shishi (lion-dog) finial</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="artifact-metadata" style="background-color: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <h4 style="color: rgb(35, 88, 135);">ExtendedMetadata</h4>
+                        <ul style="list-style-type: none; padding-left: 0; color: #666666;">
+                            <li><strong style="color: #333333;">Documentation:</strong> "Chinese ceramics in the collection of the Rijksmuseum, Amsterdam: the Ming and Qing dynasties, p. 110, cat.nr. 106"</li>
+                            <li><strong style="color: #333333;">RelatedCollections:</strong> Dekselpot met vrouwen op een terras en dekselknop in de vorm van een shishi</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="artifact-metadata" style="background-color: #ffffff; padding: 15px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <h4 style="color: rgb(35, 88, 135);">Metadata_for_Management</h4>
+                        <ul style="list-style-type: none; padding-left: 0; color: #666666;">
+                            <li><strong style="color: #333333;">Identifier:</strong> AK-RBK-14943-B</li>
+                            <li><strong style="color: #333333;">Measurements:</strong> Height: 24 cm, Diameter: 18 cm</li>
+                            <li><strong style="color: #333333;">Period:</strong> Qing-dynasty (1644-1912) / Kangxi-period (1662-1722)</li>
+                            <li><strong style="color: #333333;">Preservation:</strong> Current Location: Rijksmuseum, Amsterdam</li>
+                            <li><strong style="color: #333333;">ProvidingInstitution:</strong> Netherlands</li>
+                            <li><strong style="color: #333333;">Source:</strong> Gift in 1937</li>
+                            <li><strong style="color: #333333;">Title:</strong> Covered jar with women on a terrace and finial in the shape of a shishi</li>
+                        </ul>
+                    </div>
+                    
+                    <a href="ontology.html" class="primary-btn" style="display: inline-block; padding: 10px 20px; background-color: rgb(35, 88, 135); color: #ffffff; text-decoration: none; border-radius: 5px;">Explore Full Ontology</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Featured Artifact Section End -->
+</body>
+
+</html>

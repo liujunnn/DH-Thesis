@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Chinese Porcelain in Europe: Data Visualization">
+    <meta name="keywords" content="Chinese porcelain, Europe, data visualization, digital cultural heritage">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Data Visualization - Chinese Porcelain in Europe</title>
+
+    <!-- Css Styles -->
+    <link rel="stylesheet" href="css/bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="css/font-awesome.min.css" type="text/css">
+    <link rel="stylesheet" href="css/elegant-icons.css" type="text/css">
+    <link rel="stylesheet" href="css/magnific-popup.css" type="text/css">
+    <link rel="stylesheet" href="css/nice-select.css" type="text/css">
+    <link rel="stylesheet" href="css/owl.carousel.min.css" type="text/css">
+    <link rel="stylesheet" href="css/slicknav.min.css" type="text/css">
+    <link rel="stylesheet" href="css/style.css" type="text/css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" />
+</head>
+
+<body>
+    <!-- Header Section Begin -->
+    <header class="header">
+        <!-- [Header content same as research.html] -->
+    </header>
+    <!-- Header Section End -->
+
+    <!-- Visualization Section Begin -->
+    <section class="visualization spad" id="visualization">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title text-center">
+                        <span>Data Visualization</span>
+                        <h2>Insights from Metadata Analysis</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-8">
+                    <div id="mapContainer" style="height: 400px;"></div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="visualization__text">
+                        <h3>Geographical Distribution</h3>
+                        <p>Explore the geographical spread of Chinese porcelain collections across European countries, reflecting historical patterns and current preservation efforts.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="visualization__text">
+                        <h3>Year Interval Distribution</h3>
+                        <canvas id="yearIntervalChart"></canvas>
+                        <p>Analysis of the distribution of Chinese porcelain entries by year intervals, highlighting the temporal trends in the dataset.</p>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="visualization__text">
+                        <h3>Count of Entries by Year Interval</h3>
+                        <canvas id="countByYearIntervalChart"></canvas>
+                        <p>Bar chart showing the count of Chinese porcelain entries for each year interval.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Visualization Section End -->
+
+    <!-- Chinese Ladies on Porcelain Section Begin -->
+    <section class="chinese-ladies-porcelain spad" id="chinese-ladies-porcelain">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="section-title text-center">
+                        <span>Case Study</span>
+                        <h2>Chinese Ladies on Porcelain in Europe</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="visualization__text">
+                        <h3>Color Palette</h3>
+                        <div id="colorPalette" style="height: 50px; display: flex;"></div>
+                        <p>This color palette represents the predominant colors found in Chinese porcelain depicting ladies, as observed in European collections. Click on a color for more information.</p>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="visualization__text">
+                        <h3>Color Distribution</h3>
+                        <canvas id="colorDistributionChart"></canvas>
+                        <p>This chart shows the distribution of colors in Chinese porcelain featuring ladies, based on the analysis of European collections.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="visualization__text">
+                        <h3>Proportional Color Palette</h3>
+                        <div id="proportionalColorPalette" style="height: 100px;"></div>
+                        <p>This proportional color palette visualizes the relative frequency of each color in Chinese porcelain depicting ladies, as found in European collections. Click on a color segment for more information.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Chinese Ladies on Porcelain Section End -->
+
+    <!-- Footer Section Begin -->
+    <footer class="footer">
+        <!-- [Footer content same as research.html] -->
+    </footer>
+    <!-- Footer Section End -->
+
+    <!-- Js Plugins -->
+    <script src="js/jquery-3.3.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery.magnific-popup.min.js"></script>
+    <script src="js/jquery.nice-select.min.js"></script>
+    <script src="js/jquery.slicknav.js"></script>
+    <script src="js/owl.carousel.min.js"></script>
+    <script src="js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <script>
+    // Color palette for the first section (Metadata Overview)
+    const metadataColors = ['#5A4C46', '#D2B48C', '#9C7E65', '#E9DCC9', '#8B4513'];
+
+    // Updated color palette data for Chinese Ladies on Porcelain
+    const colorPaletteData = [
+        { name: 'Blue', hex: '#1A3263', percentage: 50.14 },
+        { name: 'Cyan', hex: '#7BAEA0', percentage: 19.49 },
+        { name: 'Yellow', hex: '#E3B778', percentage: 15.97 },
+        { name: 'Red', hex: '#B84C4C', percentage: 11.74 },
+        { name: 'Green', hex: '#4A7B4A', percentage: 2.51 },
+        { name: 'Magenta', hex: '#C15B78', percentage: 0.15 }
+    ];
+
+    // Geographical Distribution Map
+    const map = L.map('mapContainer').setView([50.5039, 4.4699], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+        maxZoom: 18,
+    }).addTo(map);
+
+    const geographicalData = [
+        { country: 'Austria', percentage: 22.4, latitude: 47.5162, longitude: 14.5501 },
+        { country: 'Belgium', percentage: 19.4, latitude: 50.5039, longitude: 4.4699 },
+        { country: 'Netherlands', percentage: 16.3, latitude: 52.1326, longitude: 5.2913 },
+        { country: 'Sweden', percentage: 10.7, latitude: 60.1282, longitude: 18.6435 },
+    ];
+
+    geographicalData.forEach((data, index) => {
+        const marker = L.marker([data.latitude, data.longitude]).addTo(map);
+        marker.bindPopup(`<b>${data.country}</b><br>Percentage: ${data.percentage}%`);
+
+        // Add a pie chart to the popup
+        const pieChart = document.createElement('canvas');
+        pieChart.width = 200;
+        pieChart.height = 200;
+        marker.getPopup().setContent(pieChart);
+
+        new Chart(pieChart.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: [data.country, 'Others'],
+                datasets: [{
+                    data: [data.percentage, 100 - data.percentage],
+                    backgroundColor: [metadataColors[index], '#C15B78']
+                }]
+            },
+            options: {
+                responsive: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    });
+
+    // Year Interval Distribution Chart
+    const yearIntervalCtx = document.getElementById('yearIntervalChart').getContext('2d');
+    new Chart(yearIntervalCtx, {
+        type: 'pie',
+        data: {
+            labels: ['1700-1749', '1750-1799', '1800-1849', '1850-1899', '1900-1949', '1950-1999'],
+            datasets: [{
+                data: [68.4, 6.2, 4.7, 13.8, 4.9, 2.0],
+                backgroundColor: metadataColors
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed.toFixed(1) + '%';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Count by Year Interval Chart
+    const countByYearIntervalCtx = document.getElementById('countByYearIntervalChart').getContext('2d');
+    new Chart(countByYearIntervalCtx, {
+        type: 'bar',
+        data: {
+            labels: ['1700-1749', '1750-1799', '1800-1849', '1850-1899', '1900-1949', '1950-1999'],
+            datasets: [{
+                label: 'Count',
+                data: [752, 68, 52, 152, 54, 22],
+                backgroundColor: metadataColors
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Create interactive color palette
+    const colorPalette = document.getElementById('colorPalette');
+    colorPaletteData.forEach(color => {
+        const colorBox = document.createElement('div');
+        colorBox.style.backgroundColor = color.hex;
+        colorBox.style.flex = '1';
+        colorBox.style.cursor = 'pointer';
+        colorBox.title = `${color.name}: ${color.hex}`;
+        colorBox.addEventListener('click', () => {
+            alert(`Color: ${color.name}\nHex: ${color.hex}\nPercentage: ${color.percentage}%`);
+        });
+        colorBox.addEventListener('mouseover', () => {
+            colorBox.style.opacity = '0.8';
+        });
+        colorBox.addEventListener('mouseout', () => {
+            colorBox.style.opacity = '1';
+        });
+        colorPalette.appendChild(colorBox);
+    });
+
+    // Create color distribution chart
+    const colorDistributionCtx = document.getElementById('colorDistributionChart').getContext('2d');
+    new Chart(colorDistributionCtx, {
+        type: 'polarArea',
+        data: {
+            labels: colorPaletteData.map(color => color.name),
+            datasets: [{
+                data: colorPaletteData.map(color => color.percentage),
+                backgroundColor: colorPaletteData.map(color => color.hex)
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            if (context.parsed !== null) {
+                                label += context.parsed.toFixed(2) + '%';
+                            }
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Create interactive proportional color palette
+    const proportionalColorPalette = document.getElementById('proportionalColorPalette');
+    colorPaletteData.forEach(color => {
+        const colorBox = document.createElement('div');
+        colorBox.style.backgroundColor = color.hex;
+        colorBox.style.width = `${color.percentage}%`;
+        colorBox.style.height = '100%';
+        colorBox.style.float = 'left';
+        colorBox.style.cursor = 'pointer';
+        colorBox.title = `${color.name}: ${color.percentage}%`;
+        colorBox.addEventListener('click', () => {
+            alert(`Color: ${color.name}\nHex: ${color.hex}\nPercentage: ${color.percentage}%`);
+        });
+        colorBox.addEventListener('mouseover', () => {
+            colorBox.style.opacity = '0.8';
+        });
+        colorBox.addEventListener('mouseout', () => {
+            colorBox.style.opacity = '1';
+        });
+        proportionalColorPalette.appendChild(colorBox);
+    });
+    </script>
+</body>
+
+</html>
