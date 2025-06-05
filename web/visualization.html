@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Chinese Porcelain in Europe: Data Visualization" />
+    <meta name="keywords" content="Chinese porcelain, Europe, data visualization, digital cultural heritage" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Data Visualization - Chinese Porcelain in Europe</title>
+
+    <!-- External Resources -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://cdn.jsdelivr.net/npm/wordcloud@1.2.2/src/wordcloud2.min.js"></script>
+
+    <!-- Leaflet 地图库 -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#235887', // 主页导航栏蓝色主题色
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        neutral: '#6B7280',
+                        dark: '#1F2937',
+                        porcelain: {
+                            blue: '#4A6FA5',    // 低饱和度瓷蓝色
+                            cyan: '#82B3A8',    // 低饱和度瓷青色
+                            yellow: '#D4B676',   // 低饱和度瓷黄色
+                            red: '#A65959',     // 低饱和度瓷红色
+                            green: '#6D8B74',   // 低饱和度瓷绿色
+                            purple: '#947EA8',  // 低饱和度瓷紫色
+                            orange: '#D28A67',  // 低饱和度瓷橙色
+                            pink: '#C892A1',    // 低饱和度瓷粉色
+                            brown: '#A68C78',   // 低饱和度瓷棕色
+                            beige: '#E8E4D6',   // 低饱和度瓷米色
+                            lightCyan: 'rgba(55, 220, 214, 0.7)' // 浅青色
+                        },
+                        background: '#f0f8ff', // 浅蓝色背景
+                        blue: {
+                            light: '#DBEAFE',
+                            DEFAULT: '#3B82F6',
+                            dark: '#1D4ED8'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                        serif: ['Georgia', 'serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .chart-container {
+                @apply rounded-xl shadow-lg overflow-hidden bg-white p-4 mb-6 transition-all duration-300 hover:shadow-xl;
+            }
+            .map-container {
+                @apply rounded-xl shadow-lg overflow-hidden h-[350px] mb-6 transition-all duration-300 hover:shadow-xl;
+            }
+            .section-title {
+                @apply mb-12 text-center;
+            }
+            .section-title span {
+                @apply text-blue font-bold text-sm uppercase tracking-wider;
+            }
+            .section-title h2 {
+                @apply text-[clamp(1.8rem,4vw,2.8rem)] font-bold mt-2 text-blue-dark font-serif;
+            }
+            .visualization-text {
+                @apply p-6 bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl;
+            }
+            .visualization-text h3 {
+                @apply text-xl font-bold mb-3 text-dark;
+            }
+            .visualization-text p {
+                @apply text-neutral;
+            }
+            .tooltip-custom {
+                @apply absolute invisible bg-dark text-white text-sm px-3 py-2 rounded shadow-lg z-50 pointer-events-none max-w-xs;
+            }
+            .timeline-container {
+                @apply relative border-l-2 border-primary pl-8 py-4;
+            }
+            .timeline-item {
+                @apply relative mb-8;
+            }
+            .timeline-content {
+                @apply bg-white p-4 rounded-lg shadow-md;
+            }
+            .timeline-date {
+                @apply absolute -left-10 top-2 bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center font-bold;
+            }
+            .heatmap-container {
+                @apply rounded-xl shadow-lg overflow-hidden bg-white p-6 mb-6 transition-all duration-300 hover:shadow-xl;
+            }
+            .heatmap-grid {
+                @apply grid grid-cols-4 gap-1;
+            }
+            .heatmap-header {
+                @apply text-center font-bold py-2 bg-gray-100;
+            }
+            .heatmap-cell {
+                @apply p-3 text-center transition-all duration-200 hover:scale-105;
+            }
+            .wordcloud-container {
+                @apply w-full h-[500px] flex items-center justify-center bg-white rounded-xl shadow-lg p-6;
+            }
+            .wordcloud-canvas {
+                @apply w-full h-full max-w-full;
+            }
+            .wordcloud-tooltip {
+                @apply absolute invisible bg-dark text-white text-sm px-3 py-2 rounded shadow-lg z-50 pointer-events-none whitespace-nowrap;
+            }
+            .header {
+                @apply bg-white shadow-sm sticky top-0 z-50;
+            }
+            .nav-link {
+                @apply text-neutral hover:text-primary transition-colors font-medium;
+            }
+            .nav-link.active {
+                @apply text-primary;
+            }
+            .mobile-menu-btn {
+                @apply md:hidden text-neutral focus:outline-none;
+            }
+            .mobile-menu {
+                @apply md:hidden hidden bg-white border-t;
+            }
+            .blue-gradient {
+                background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+            }
+            .image-container {
+                @apply grid grid-cols-1 md:grid-cols-2 gap-4;
+            }
+            .artwork-image {
+                @apply w-full h-auto rounded-lg shadow-md hover:shadow-lg transition-shadow;
+            }
+            .chart-and-images {
+                @apply grid grid-cols-1 lg:grid-cols-12 gap-8 items-center;
+            }
+            .chart-col {
+                @apply lg:col-span-8;
+            }
+            .images-col {
+                @apply lg:col-span-2;
+            }
+            .artwork-image {
+                @apply w-full h-auto rounded-lg shadow-md hover:shadow-lg transition-shadow max-h-[350px] object-cover;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-background text-dark">
+    <!-- Navigation Bar -->
+    <header class="header">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="./index.html" class="text-2xl font-bold text-blue-dark flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-10 h-10">
+                    <circle cx="50" cy="50" r="45" fill="#3B82F6" opacity="0.2" />
+                    <path d="M30,30 L70,30 L70,70 L30,70 Z" fill="none" stroke="#1A3263" stroke-width="4" />
+                    <circle cx="50" cy="50" r="15" fill="#7BAEA0" />
+                    <path d="M40,40 Q50,25 60,40 T50,65 T40,40" fill="#E3B778" />
+                </svg>
+                <span class="font-serif">ChinaPorcelain</span>
+            </a>
+
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="./index.html" class="nav-link">Home</a>
+                <a href="./research.html" class="nav-link">Research</a>
+                <a href="./ontology.html" class="nav-link">Ontology</a>
+                <a href="./visualization.html" class="nav-link active">Visualization</a>
+                <a href="./aboutus.html" class="nav-link">About</a>
+            </nav>
+
+            <button id="mobile-menu-button" class="mobile-menu-btn">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+
+        <div id="mobile-menu" class="mobile-menu">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="./index.html" class="nav-link py-2 px-4 rounded-lg hover:bg-gray-50">Home</a>
+                <a href="./research.html" class="nav-link py-2 px-4 rounded-lg hover:bg-gray-50">Research</a>
+                <a href="./ontology.html" class="nav-link py-2 px-4 rounded-lg hover:bg-gray-50">Ontology</a>
+                <a href="./visualization.html" class="nav-link active py-2 px-4 rounded-lg hover:bg-gray-50">Visualization</a>
+                <a href="./aboutus.html" class="nav-link py-2 px-4 rounded-lg hover:bg-gray-50">About</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section - Blue Theme -->
+    <section class="py-16 blue-gradient">
+        <div class="container mx-auto px-4 text-center max-w-4xl">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6 text-blue-dark font-serif">
+                Chinese Porcelain in European Collections
+            </h1>
+            <p class="text-xl text-neutral max-w-2xl mx-auto">
+                A comprehensive visualization of historical Chinese porcelain artifacts preserved in European museums and collections.
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="#visualization" class="bg-blue hover:bg-blue-dark text-white px-6 py-3 rounded-lg transition-colors">
+                    Explore Visualizations
+                </a>
+                <a href="#thematic-analysis" class="bg-white hover:bg-gray-100 text-blue border border-blue px-6 py-3 rounded-lg transition-colors">
+                    Thematic Analysis
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visualization Section -->
+    <section id="visualization" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="section-title">
+                <span>DATA VISUALIZATION</span>
+                <h2>Insights from Metadata Analysis</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-12">
+                <!-- Geographical Distribution Map -->
+                <div class="lg:col-span-8 map-container relative">
+                    <div id="map" class="w-full h-full rounded-xl"></div>
+                    <div id="mapTooltip" class="tooltip-custom"></div>
+                </div>
+                <div class="lg:col-span-4 visualization-text">
+                    <h3><i class="fas fa-globe-europe mr-2 text-accent"></i> Geographical Distribution</h3>
+                    <p class="mt-3">Explore the geographical spread of Chinese porcelain collections across European countries, reflecting historical trade routes and cultural exchange patterns.</p>
+                    <div class="mt-4">
+                        <h4 class="font-bold mb-2">Key Countries:</h4>
+                        <ul class="space-y-1">
+                            <li class="flex items-center"><div class="w-3 h-3 bg-porcelain-blue mr-2 rounded-full"></div> Netherlands: 36.3%</li>
+                            <li class="flex items-center"><div class="w-3 h-3 bg-porcelain-cyan mr-2 rounded-full"></div> Austria: 22.4%</li>
+                            <li class="flex items-center"><div class="w-3 h-3 bg-porcelain-yellow mr-2 rounded-full"></div> Belgium: 19.4%</li>
+                            <li class="flex items-center"><div class="w-3 h-3 bg-porcelain-red mr-2 rounded-full"></div> Sweden: 10.7%</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Count by Year Interval (Single chart, full width) -->
+                <div class="lg:col-span-12 chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-chart-bar mr-2 text-accent"></i> Count of Entries by Year Interval
+                    </h3>
+                    <div class="h-[300px]">
+                        <canvas id="countByYearIntervalChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-neutral">Bar chart illustrating the absolute number of porcelain pieces documented for each historical period, with 752 pieces from the 1700-1749 period.</p>
+                </div>
+
+                <!-- 数据提供者分析图 -->
+                <div class="lg:col-span-12 chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-database mr-2 text-accent"></i> Top Data Providers
+                    </h3>
+                    <div class="h-[400px]">
+                        <canvas id="dataProvidersChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-neutral">This chart shows the top institutions providing Chinese porcelain data. The Rijksmuseum leads with 25% of all entries.</p>
+                </div>
+
+                <!-- 瓷器类型分布 -->
+                <div class="lg:col-span-6 chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-shapes mr-2 text-accent"></i> Porcelain Type Distribution
+                    </h3>
+                    <div class="h-[300px]">
+                        <canvas id="porcelainTypeChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-neutral">Distribution of porcelain artifacts by functional type, with vases and bowls being the most common forms in European collections.</p>
+                    <div class="mt-3 bg-gray-50 p-3 rounded-lg">
+                        <h4 class="font-bold mb-1">Research Insight:</h4>
+                        <p class="text-sm">The prevalence of vases suggests their decorative value, while bowls indicate practical use in European households.</p>
+                    </div>
+                </div>
+
+                <!-- 保存状态分析 -->
+                <div class="lg:col-span-6 chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-search mr-2 text-accent"></i> Preservation Condition Analysis
+                    </h3>
+                    <div class="h-[300px]">
+                        <canvas id="conditionChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-neutral">Analysis of artifact preservation conditions, showing that most pieces are in good condition despite their age.</p>
+                    <div class="mt-3 bg-gray-50 p-3 rounded-lg">
+                        <h4 class="font-bold mb-1">Research Insight:</h4>
+                        <p class="text-sm">The high percentage of well-preserved items reflects careful curation in European museums over centuries.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Thematic Analysis Section -->
+    <section id="thematic-analysis" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="section-title">
+                <span>THEMATIC ANALYSIS</span>
+                <h2>Advanced Visualization Techniques</h2>
+            </div>
+
+            <div class="grid grid-cols-1 gap-12 mt-12">
+                <!-- Theme Element Relationship Network -->
+                <div class="chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-project-diagram mr-2 text-accent"></i> Theme Element Relationship Network
+                    </h3>
+                    <div class="h-[500px] border border-gray-200 rounded-lg overflow-hidden">
+                        <canvas id="relationChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-neutral">Network visualization showing relationships between different thematic elements found on Chinese porcelain, revealing connections between floral patterns, landscapes, and human figures.</p>
+                </div>
+
+                <!-- Material Technique Timeline -->
+                <div class="chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-layer-group mr-2 text-accent"></i> Material Technique Timeline
+                    </h3>
+                    <div class="h-[500px]">
+                        <canvas id="techniqueChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-neutral">Stacked area chart showing the evolution of material techniques used in Chinese porcelain production over time, with underglaze blue dominating throughout the centuries.</p>
+                </div>
+
+                <!-- Scene Narrative Timeline -->
+                <div class="chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-history mr-2 text-accent"></i> Scene Narrative Timeline
+                    </h3>
+                    <div class="timeline-container">
+                        <div class="timeline-item">
+                            <div class="timeline-date">1700</div>
+                            <div class="timeline-content">
+                                <h4 class="font-bold">Courtly Life Scenes</h4>
+                                <p class="mt-2">Early 18th century porcelain featured depictions of imperial court life, with emperors and courtiers in formal settings.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-date">1750</div>
+                            <div class="timeline-content">
+                                <h4 class="font-bold">Mythological Stories</h4>
+                                <p class="mt-2">Mid-18th century saw an increase in mythological narratives and legendary figures from Chinese folklore.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-date">1800</div>
+                            <div class="timeline-content">
+                                <h4 class="font-bold">Everyday Activities</h4>
+                                <p class="mt-2">19th century porcelain shifted focus to scenes of daily life, agriculture, and market activities.</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-date">1850</div>
+                            <div class="timeline-content">
+                                <h4 class="font-bold">Nature and Landscapes</h4>
+                                <p class="mt-2">Late 19th century featured elaborate natural scenes with mountains, rivers, and gardens as primary motifs.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="mt-2 text-neutral">Evolution of narrative scenes depicted on Chinese porcelain over time, showing a shift from formal court scenes to everyday life and nature depictions.</p>
+                </div>
+
+                <!-- Keyword Analysis Word Cloud -->
+                <div class="chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-cloud mr-2 text-accent"></i> Descriptive Keyword Analysis
+                    </h3>
+                    <div class="wordcloud-container relative" id="wordcloud-container">
+                        <canvas id="wordcloud" class="wordcloud-canvas"></canvas>
+                        <div id="wordcloudTooltip" class="wordcloud-tooltip"></div>
+                    </div>
+                    <p class="mt-2 text-neutral">Word cloud visualization of descriptive keywords from Chinese porcelain artifacts, with size indicating frequency. This analysis reveals dominant themes and artistic elements in European collections.</p>
+                    <div class="mt-4 bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold mb-2">Research Insights:</h4>
+                        <ul class="list-disc pl-5 space-y-1">
+                            <li>Garden and floral motifs are most prevalent, reflecting the importance of nature in Chinese art</li>
+                            <li>Blue-and-white porcelain dominates descriptions, highlighting its historical significance</li>
+                            <li>Chinese ladies appear frequently, indicating cultural fascination with feminine figures</li>
+                            <li>Polychrome decoration techniques show European appreciation for vibrant colors</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Chinese Ladies on Porcelain Section -->
+    <section id="chinese-ladies-porcelain" class="py-16 bg-background">
+        <div class="container mx-auto px-4">
+            <div class="section-title">
+                <span>CASE STUDY</span>
+                <h2>Chinese Ladies on Porcelain in Europe</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-12">
+                <!-- 颜色饼状图分析（修正版） -->
+                <div class="lg:col-span-12 chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-pie-chart mr-2 text-accent"></i> Color Analysis of Featured Artworks (Color Extraction)
+                    </h3>
+                    <p class="mb-6 text-neutral">Color extraction from porcelain artworks with background filtration, showcasing low-saturation hues typical of Chinese porcelain glazes.</p>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Figure A 分析 - 提取自"Three 'go' playing Chinese ladies" saucer -->
+                        <div class="chart-and-images">
+                            <div class="lg:col-span-6">
+                                <img src="FigureA.jpg" alt="Saucer with three 'go' playing Chinese ladies" class="artwork-image">
+                                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                                    <h4 class="font-bold mb-2">Color Extraction Notes:</h4>
+                                    <p class="text-sm text-neutral">
+                                        Extracted from central figures and decorative elements, excluding the white porcelain background.
+                                        Dominant hues include muted orange-red from clothing, lavender from accessories, and earth tones from the scene.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-6">
+                                <div class="h-[400px]">
+                                    <canvas id="figureAChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Figure B 分析 - 提取自"Chinese ladies and flower pots" jar -->
+                        <div class="chart-and-images">
+                            <div class="lg:col-span-6">
+                                <img src="FigureB.jpg" alt="Ovoid covered jar with Chinese ladies and flower pots" class="artwork-image">
+                                <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                                    <h4 class="font-bold mb-2">Color Extraction Notes:</h4>
+                                    <p class="text-sm text-neutral">
+                                        Extracted from floral motifs and figures, with background filtration.
+                                        Features increased green from foliage, added yellow from flowers, and reduced brown from pottery surfaces.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="lg:col-span-6">
+                                <div class="h-[400px]">
+                                    <canvas id="figureBChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-bold mb-2">Color Extraction Methodology:</h4>
+                        <p class="text-neutral">
+                            Colors were extracted using RGB sampling of non-background elements, with a focus on decorative patterns and figures.
+                            Saturation was reduced to match historical porcelain glazing techniques, and colors were grouped by hue similarity
+                            to highlight dominant palettes in each artwork.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 颜色分布图表 -->
+                <div class="lg:col-span-6 visualization-text">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-palette mr-2 text-accent"></i> Color Distribution in Chinese Lady-themed Porcelain
+                    </h3>
+                    <div class="h-[300px]">
+                        <canvas id="colorDistributionChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-neutral">Detailed breakdown of color usage in porcelain artworks featuring Chinese ladies, with low-saturation blue being the dominant color at 50.14%.</p>
+                </div>
+
+                <!-- 颜色趋势图表 -->
+                <div class="lg:col-span-6 chart-container">
+                    <h3 class="text-lg font-bold mb-4 flex items-center">
+                        <i class="fas fa-timeline mr-2 text-accent"></i> Color Usage Trends Over Time
+                    </h3>
+                    <div class="h-[300px]">
+                        <canvas id="colorTrendChart"></canvas>
+                    </div>
+                    <p class="mt-2 text-neutral">Line chart showing the changing prevalence of low-saturation colors in Chinese lady-themed porcelain across historical periods, reflecting evolving glazing techniques.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- JavaScript -->
+    <script>
+        // 移动端菜单切换
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                mobileMenu.classList.add('hidden'); // 点击后关闭移动菜单
+
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // 初始化Leaflet地图
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化地图
+            const map = L.map('map').setView([52.1326, 5.2913], 4);
+
+            // 添加地图图层
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                maxZoom: 19
+            }).addTo(map);
+
+            // 添加标记
+            const countries = [
+                { name: "Netherlands", lat: 52.1326, lng: 5.2913, value: 36.3 },
+                { name: "Austria", lat: 47.5162, lng: 14.5501, value: 22.4 },
+                { name: "Belgium", lat: 50.5039, lng: 4.4699, value: 19.4 },
+                { name: "Sweden", lat: 60.1282, lng: 18.6435, value: 10.7 },
+                { name: "France", lat: 46.2276, lng: 2.2137, value: 11.2 }
+            ];
+
+            // 定义国家颜色映射（使用瓷色系）
+            const countryColors = {
+                'Netherlands': '#4A6FA5',  // 瓷蓝色
+                'Austria': '#82B3A8',     // 瓷青色
+                'Belgium': '#D4B676',     // 瓷黄色
+                'Sweden': '#A65959',      // 瓷红色
+                'France': '#6D8B74'       // 瓷绿色
+            };
+
+            // 添加国家标记
+            countries.forEach(country => {
+                const marker = L.circleMarker([country.lat, country.lng], {
+                    radius: 5 + country.value/2,
+                    fillColor: countryColors[country.name] || '#6D8B74',
+                    color: '#fff',
+                    weight: 1,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div class="font-bold">${country.name}</div>
+                    <div>Collection Proportion: ${country.value}%</div>
+                `);
+            });
+        });
+
+        // 按年份区间计数图表
+        const countByYearIntervalCtx = document.getElementById('countByYearIntervalChart').getContext('2d');
+        new Chart(countByYearIntervalCtx, {
+            type: 'bar',
+            data: {
+                labels: ['1700-1749', '1750-1799', '1800-1849', '1850-1899', '1900-1949', '1950-1999'],
+                datasets: [{
+                    label: 'Number of Entries',
+                    data: [752, 68, 52, 152, 54, 22],
+                    backgroundColor: '#4A6FA5',
+                    borderWidth: 1,
+                    borderRadius: 6,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Pieces'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time Period'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Count: ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+
+        // Figure A 颜色提取数据
+        const figureAData = {
+            labels: ['Light Orange-Red', 'Lavender', 'Light Brown', 'Beige', 'Light Cyan'],
+            datasets: [{
+                data: [22, 18, 25, 20, 15],
+                backgroundColor: [
+                    'rgba(210, 138, 103, 0.7)',
+                    'rgba(148, 126, 168, 0.7)',
+                    'rgba(166, 140, 120, 0.7)',
+                    'rgba(232, 228, 214, 0.7)',
+                    'rgba(55, 220, 214, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(210, 138, 103, 0.9)',
+                    'rgba(148, 126, 168, 0.9)',
+                    'rgba(166, 140, 120, 0.9)',
+                    'rgba(232, 228, 214, 0.9)',
+                    'rgba(55, 220, 214, 0.9)'
+                ],
+                borderWidth: 1,
+                hoverOffset: 15
+            }]
+        };
+
+        // Figure B 颜色提取数据（调整后）
+        const figureBData = {
+            labels: ['Light Green', 'Peach Orange', 'Light Brown', 'Beige', 'Light Pink', 'Yellow'],
+            datasets: [{
+                data: [33, 22, 5, 25, 5, 10],
+                backgroundColor: [
+                    'rgba(109, 139, 116, 0.7)',
+                    'rgba(210, 138, 103, 0.7)',
+                    'rgba(166, 140, 120, 0.7)',
+                    'rgba(232, 228, 214, 0.7)',
+                    'rgba(200, 146, 161, 0.7)',
+                    'rgba(212, 182, 118, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(109, 139, 116, 0.9)',
+                    'rgba(210, 138, 103, 0.9)',
+                    'rgba(166, 140, 120, 0.9)',
+                    'rgba(232, 228, 214, 0.9)',
+                    'rgba(200, 146, 161, 0.9)',
+                    'rgba(212, 182, 118, 0.9)'
+                ],
+                borderWidth: 1,
+                hoverOffset: 15
+            }]
+        };
+
+        // Figure A 颜色饼图
+        const figureACtx = document.getElementById('figureAChart').getContext('2d');
+        new Chart(figureACtx, {
+            type: 'pie',
+            data: figureAData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.parsed}%`;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            return figureAData.labels[context.dataIndex];
+                        },
+                        color: 'white',
+                        font: {
+                            weight: 'bold'
+                        },
+                        background: {
+                            color: (context) => figureAData.datasets[0].backgroundColor[context.dataIndex],
+                            padding: 6,
+                            borderRadius: 4
+                        },
+                        anchor: 'center',
+                        align: 'center'
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 2000
+                }
+            }
+        });
+
+        // Figure B 颜色饼图（调整后）
+        const figureBCtx = document.getElementById('figureBChart').getContext('2d');
+        new Chart(figureBCtx, {
+            type: 'pie',
+            data: figureBData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.parsed}%`;
+                            }
+                        }
+                    },
+                    datalabels: {
+                        formatter: (value, context) => {
+                            return figureBData.labels[context.dataIndex];
+                        },
+                        color: 'white',
+                        font: {
+                            weight: 'bold'
+                        },
+                        background: {
+                            color: (context) => figureBData.datasets[0].backgroundColor[context.dataIndex],
+                            padding: 6,
+                            borderRadius: 4
+                        },
+                        anchor: 'center',
+                        align: 'center'
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 2000
+                }
+            }
+        });
+
+        // 中国女性瓷器颜色数据（低饱和度）
+        const colorData = [
+            { name: 'Low-saturation Blue', hex: '#4A6FA5', percentage: 50.14, periodData: [65, 48, 32, 28, 15, 5] },
+            { name: 'Mint Cyan', hex: '#82B3A8', percentage: 19.49, periodData: [10, 18, 25, 30, 22, 15] },
+            { name: 'Warm Yellow', hex: '#D4B676', percentage: 15.97, periodData: [8, 12, 18, 22, 25, 30] },
+            { name: 'Crimson Red', hex: '#A65959', percentage: 11.74, periodData: [12, 15, 20, 18, 30, 35] },
+            { name: 'Forest Green', hex: '#6D8B74', percentage: 2.51, periodData: [3, 5, 8, 10, 12, 18] }
+        ];
+
+        // 颜色分布图表
+        const colorDistributionCtx = document.getElementById('colorDistributionChart').getContext('2d');
+        new Chart(colorDistributionCtx, {
+            type: 'bar',
+            data: {
+                labels: colorData.map(color => color.name),
+                datasets: [{
+                    label: 'Percentage',
+                    data: colorData.map(color => color.percentage),
+                    backgroundColor: colorData.map(color => `${color.hex}CC`), // 半透明填充
+                    borderColor: colorData.map(color => color.hex),
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.8
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Percentage (%)'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.parsed.x.toFixed(2)}%`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1500,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+
+        // 颜色趋势图表
+        const colorTrendCtx = document.getElementById('colorTrendChart').getContext('2d');
+        new Chart(colorTrendCtx, {
+            type: 'line',
+            data: {
+                labels: ['1700-1749', '1750-1799', '1800-1849', '1850-1899', '1900-1949', '1950-1999'],
+                datasets: colorData.map(color => ({
+                    label: color.name,
+                    data: color.periodData,
+                    borderColor: `${color.hex}CC`, // 低饱和度边框
+                    backgroundColor: `${color.hex}20`, // 半透明填充
+                    borderWidth: 3,
+                    pointBackgroundColor: color.hex,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    tension: 0.2,
+                    fill: false
+                }))
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Percentage (%)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Time Period'
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    }
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+
+        // 主题元素关系网络
+        const relationCtx = document.getElementById('relationChart').getContext('2d');
+        new Chart(relationCtx, {
+            type: 'bubble',
+            data: {
+                datasets: [
+                    {
+                        label: 'Floral Patterns',
+                        data: [
+                            {x: 40, y: 60, r: 25},
+                            {x: 60, y: 30, r: 15},
+                            {x: 30, y: 40, r: 20},
+                        ],
+                        backgroundColor: '#6D8B74'
+                    },
+                    {
+                        label: 'Landscapes',
+                        data: [
+                            {x: 70, y: 70, r: 20},
+                            {x: 50, y: 50, r: 18},
+                            {x: 80, y: 40, r: 22},
+                        ],
+                        backgroundColor: '#82B3A8'
+                    },
+                    {
+                        label: 'Human Figures',
+                        data: [
+                            {x: 30, y: 70, r: 30},
+                            {x: 50, y: 60, r: 25},
+                            {x: 70, y: 50, r: 20},
+                        ],
+                        backgroundColor: '#A65959'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Complexity'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Frequency'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: Frequency ${context.parsed.x}, Complexity ${context.parsed.y}`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 材料技术时间线
+        const techniqueCtx = document.getElementById('techniqueChart').getContext('2d');
+        new Chart(techniqueCtx, {
+            type: 'line',
+            data: {
+                labels: ['1600-1650', '1650-1700', '1700-1750', '1750-1800', '1800-1850', '1850-1900'],
+                datasets: [
+                    {
+                        label: 'Underglaze Blue',
+                        data: [30, 65, 75, 70, 60, 55],
+                        borderColor: '#4A6FA5',
+                        backgroundColor: '#4A6FA520',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Famille Rose',
+                        data: [0, 10, 35, 45, 50, 40],
+                        borderColor: '#A65959',
+                        backgroundColor: '#A6595920',
+                        fill: true,
+                        tension: 0.3
+                    },
+                    {
+                        label: 'Famille Verte',
+                        data: [15, 25, 30, 20, 15, 10],
+                        borderColor: '#6D8B74',
+                        backgroundColor: '#6D8B7420',
+                        fill: true,
+                        tension: 0.3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        stacked: true,
+                        title: {
+                            display: true,
+                            text: 'Usage (%)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Time Period'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+
+        // 关键词分析词云
+        document.addEventListener('DOMContentLoaded', function() {
+            const wordcloudContainer = document.getElementById('wordcloud-container');
+            const wordcloudCanvas = document.getElementById('wordcloud');
+            const wordcloudTooltip = document.getElementById('wordcloudTooltip');
+
+            // 确保容器和画布有正确的尺寸
+            const resizeWordcloud = () => {
+                const containerRect = wordcloudContainer.getBoundingClientRect();
+                wordcloudCanvas.width = containerRect.width;
+                wordcloudCanvas.height = containerRect.height;
+            };
+
+            // 初始设置尺寸
+            resizeWordcloud();
+
+            // 窗口大小变化时调整尺寸
+            window.addEventListener('resize', resizeWordcloud);
+
+            // 关键词数据
+            const keywords = [
+                ['garden', 45],
+                ['flower', 40],
+                ['landscape', 35],
+                ['blue', 32],
+                ['porcelain', 30],
+                ['decoration', 28],
+                ['Chinese', 25],
+                ['ladies', 22],
+                ['pot', 20],
+                ['vase', 18],
+                ['polychrome', 17],
+                ['underglaze', 16],
+                ['famille verte', 15],
+                ['jar', 14],
+                ['plate', 13],
+                ['platter', 12],
+                ['design', 11],
+                ['butterfly', 10],
+                ['pavilion', 9],
+                ['mountain', 8],
+                ['tree', 7],
+                ['painting', 6],
+                ['artemisia', 5],
+                ['qin', 4],
+                ['peony', 4],
+                ['cherry', 3],
+                ['fence', 3],
+                ['costume', 3],
+                ['servant', 2],
+                ['lotus', 2]
+            ];
+
+            // 颜色调色板（低饱和度瓷色系）
+            const colorPalette = [
+                '#4A6FA5',  // 瓷蓝色
+                '#82B3A8',  // 瓷青色
+                '#D4B676',  // 瓷黄色
+                '#A65959',  // 瓷红色
+                '#6D8B74',  // 瓷绿色
+                '#947EA8',  // 瓷紫色
+                '#D28A67',  // 瓷橙色
+                '#C892A1'   // 瓷粉色
+            ];
+
+            // 创建词云
+            WordCloud(wordcloudCanvas, {
+                list: keywords,
+                backgroundColor: '#ffffff',
+                gridSize: 6,
+                weightFactor: (size) => 5.5 * Math.pow(size, 0.7),
+                fontFamily: 'Georgia, serif',
+                color: () => colorPalette[Math.floor(Math.random() * colorPalette.length)],
+                rotateRatio: 0.4,
+                rotationSteps: 3,
+                minRotation: -60,
+                maxRotation: 60,
+                drawOutOfBound: false,
+                shrinkToFit: true,
+                shape: 'circle',
+                minSize: 10,
+                hover: function(item, dimension, event) {
+                    if (item) {
+                        wordcloudTooltip.innerHTML = `${item[0]}: ${item[1]}`;
+                        wordcloudTooltip.style.left = (event.clientX + 10) + 'px';
+                        wordcloudTooltip.style.top = (event.clientY + 10) + 'px';
+                        wordcloudTooltip.classList.remove('invisible');
+                    } else {
+                        wordcloudTooltip.classList.add('invisible');
+                    }
+                },
+                click: function(item, dimension, event) {
+                    if (item) {
+                        // 点击后临时放大单词
+                        const originalSize = item[1];
+                        item[1] = originalSize * 1.5;
+
+                        // 重绘词云
+                        WordCloud(wordcloudCanvas, {
+                            list: keywords,
+                            backgroundColor: '#ffffff',
+                            gridSize: 6,
+                            weightFactor: (size) => 5.5 * Math.pow(size, 0.7),
+                            fontFamily: 'Georgia, serif',
+                            color: () => colorPalette[Math.floor(Math.random() * colorPalette.length)],
+                            rotateRatio: 0.4,
+                            rotationSteps: 3,
+                            minRotation: -60,
+                            maxRotation: 60,
+                            drawOutOfBound: false,
+                            shrinkToFit: true,
+                            shape: 'circle',
+                            minSize: 10,
+                            hover: function(item, dimension, event) {
+                                if (item) {
+                                    wordcloudTooltip.innerHTML = `${item[0]}: ${item[1]}`;
+                                    wordcloudTooltip.style.left = (event.clientX + 10) + 'px';
+                                    wordcloudTooltip.style.top = (event.clientY + 10) + 'px';
+                                    wordcloudTooltip.classList.remove('invisible');
+                                } else {
+                                    wordcloudTooltip.classList.add('invisible');
+                                }
+                            }
+                        });
+
+                        // 延迟后恢复单词大小
+                        setTimeout(() => {
+                            item[1] = originalSize;
+                            WordCloud(wordcloudCanvas, {
+                                list: keywords,
+                                backgroundColor: '#ffffff',
+                                gridSize: 6,
+                                weightFactor: (size) => 5.5 * Math.pow(size, 0.7),
+                                fontFamily: 'Georgia, serif',
+                                color: () => colorPalette[Math.floor(Math.random() * colorPalette.length)],
+                                rotateRatio: 0.4,
+                                rotationSteps: 3,
+                                minRotation: -60,
+                                maxRotation: 60,
+                                drawOutOfBound: false,
+                                shrinkToFit: true,
+                                shape: 'circle',
+                                minSize: 10,
+                                hover: function(item, dimension, event) {
+                                    if (item) {
+                                        wordcloudTooltip.innerHTML = `${item[0]}: ${item[1]}`;
+                                        wordcloudTooltip.style.left = (event.clientX + 10) + 'px';
+                                        wordcloudTooltip.style.top = (event.clientY + 10) + 'px';
+                                        wordcloudTooltip.classList.remove('invisible');
+                                    } else {
+                                        wordcloudTooltip.classList.add('invisible');
+                                    }
+                                }
+                            });
+                        }, 1000);
+                    }
+                }
+            });
+
+            // 添加鼠标移动事件以更新工具提示位置
+            wordcloudCanvas.addEventListener('mousemove', function(event) {
+                if (!wordcloudTooltip.classList.contains('invisible')) {
+                    wordcloudTooltip.style.left = (event.clientX + 10) + 'px';
+                    wordcloudTooltip.style.top = (event.clientY + 10) + 'px';
+                }
+            });
+
+            // 鼠标离开画布时隐藏工具提示
+            wordcloudCanvas.addEventListener('mouseleave', function() {
+                wordcloudTooltip.classList.add('invisible');
+            });
+        });
+
+        // 数据提供者分析图
+        const dataProvidersCtx = document.getElementById('dataProvidersChart').getContext('2d');
+        new Chart(dataProvidersCtx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    'Rijksmuseum',
+                    'Victoria and Albert Museum',
+                    'British Museum',
+                    'Louvre Museum',
+                    'Museum of Applied Arts',
+                    'National Museum of Sweden',
+                    'Royal Museums of Fine Arts',
+                    'Museum of Decorative Arts',
+                    'National Museum of Denmark',
+                    'Museum of Fine Arts, Budapest'
+                ],
+                datasets: [{
+                    label: 'Number of Entries',
+                    data: [450, 320, 280, 220, 190, 170, 160, 140, 120, 100],
+                    backgroundColor: [
+                        'rgba(74, 111, 165, 0.8)',    // 瓷蓝色
+                        'rgba(130, 179, 168, 0.8)',   // 瓷青色
+                        'rgba(212, 182, 118, 0.8)',   // 瓷黄色
+                        'rgba(166, 89, 89, 0.8)',    // 瓷红色
+                        'rgba(109, 139, 116, 0.8)',   // 瓷绿色
+                        'rgba(148, 126, 168, 0.8)',   // 瓷紫色
+                        'rgba(210, 138, 103, 0.8)',  // 瓷橙色
+                        'rgba(200, 146, 161, 0.8)',  // 瓷粉色
+                        'rgba(232, 228, 214, 0.8)',  // 米白色
+                        'rgba(166, 140, 120, 0.8)'   // 浅棕色
+                    ],
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.7
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            display: true,
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Number of Entries'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.parsed.x} entries`;
+                            }
+                        }
+                    },
+                    legend: {
+                        display: false
+                    }
+                },
+                animation: {
+                    duration: 2000,
+                    easing: 'easeOutQuart'
+                }
+            }
+        });
+
+        // 瓷器类型分布
+        const porcelainTypeCtx = document.getElementById('porcelainTypeChart').getContext('2d');
+        new Chart(porcelainTypeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Vases', 'Bowls', 'Plates', 'Cups', 'Jars', 'Figurines'],
+                datasets: [{
+                    data: [35, 25, 18, 12, 7, 3],
+                    backgroundColor: [
+                        '#4A6FA5',  // 瓷蓝色
+                        '#82B3A8',  // 瓷青色
+                        '#D4B676',  // 瓷黄色
+                        '#A65959',  // 瓷红色
+                        '#6D8B74',  // 瓷绿色
+                        '#947EA8'   // 瓷紫色
+                    ],
+                    borderColor: [
+                        '#4A6FA5',
+                        '#82B3A8',
+                        '#D4B676',
+                        '#A65959',
+                        '#6D8B74',
+                        '#947EA8'
+                    ],
+                    borderWidth: 1,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.parsed}%`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    animateScale: true,
+                    duration: 2000
+                }
+            }
+        });
+
+        // 保存状态分析
+        const conditionCtx = document.getElementById('conditionChart').getContext('2d');
+        new Chart(conditionCtx, {
+            type: 'polarArea',
+            data: {
+                labels: ['Excellent', 'Good', 'Fair', 'Poor', 'Fragmented'],
+                datasets: [{
+                    data: [28, 42, 18, 8, 4],
+                    backgroundColor: [
+                        'rgba(74, 111, 165, 0.7)',
+                        'rgba(130, 179, 168, 0.7)',
+                        'rgba(212, 182, 118, 0.7)',
+                        'rgba(166, 89, 89, 0.7)',
+                        'rgba(200, 146, 161, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        ticks: {
+                            display: false
+                        },
+                        grid: {
+                            circular: true
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.parsed.r}%`;
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    animateRotate: true,
+                    duration: 1500
+                }
+            }
+        });
+    </script>
+</body>
+</html>
