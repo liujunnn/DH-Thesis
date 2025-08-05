@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="The Journey of Chinese Porcelain to Europe: A Digital Humanities Narrative" />
+<meta name="keywords" content="Chinese porcelain, Europe, digital humanities, cultural exchange, museum collections" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<title>Journey of Chinese Porcelain: A Digital Story</title>
+<!-- External Resources -->
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+<!-- Leaflet Map Library -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Tailwind Configuration -->
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+primary: '#235887',
+secondary: '#10B981',
+accent: '#F59E0B',
+neutral: '#6B7280',
+dark: '#1F2937',
+porcelain: {
+blue: '#4A6FA5',
+cyan: '#82B3A8',
+yellow: '#D4B676',
+red: '#A65959',
+green: '#6D8B74',
+purple: '#947EA8',
+orange: '#D28A67',
+pink: '#C892A1',
+brown: '#A68C78',
+beige: '#E8E4D6'
+ },
+ceramicColors: {
+blueWhite: '#1E5A8E',
+gold: '#C9A961',
+green: '#5A7A5E',
+underglazedRed: '#B53737',
+familleRose: '#D4A5A5',
+teaBrown: '#6B4A3A',
+multicolor: '#947EA8'
+ },
+background: '#f0f8ff',
+blue: {
+light: '#DBEAFE',
+DEFAULT: '#3B82F6',
+dark: '#1D4ED8'
+ }
+ },
+fontFamily: {
+inter: ['Inter', 'sans-serif'],
+serif: ['Georgia', 'serif'],
+ },
+ }
+ }
+ }
+</script>
+<!-- Custom Styles -->
+<style type="text/tailwindcss">
+@layer utilities {
+.chart-container {
+ @apply rounded-xl shadow-lg overflow-hidden bg-white p-4 md:p-6 mb-6 transition-all duration-300 hover:shadow-xl relative;
+ }
+.map-container {
+ @apply rounded-xl shadow-lg overflow-hidden h-[300px] md:h-[400px] mb-6 transition-all duration-300 hover:shadow-xl;
+ }
+.chapter-title {
+ @apply mb-8 md:mb-12 text-center relative px-4;
+ }
+.chapter-title::before {
+content: '';
+ @apply absolute left-1/2 transform -translate-x-1/2 -top-6 md:-top-8 w-12 md:w-16 h-1 bg-accent;
+ }
+.chapter-title span {
+ @apply text-accent font-bold text-xs md:text-sm uppercase tracking-wider;
+ }
+.chapter-title h2 {
+ @apply text-2xl md:text-[clamp(1.8rem,4vw,2.8rem)] font-bold mt-2 text-blue-dark font-serif;
+ }
+.narrative-text {
+ @apply text-base md:text-lg text-neutral leading-relaxed max-w-3xl mx-auto mb-8 md:mb-12 px-4;
+ }
+.visualization-text {
+ @apply p-4 md:p-6 bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl;
+ }
+.visualization-text h3 {
+ @apply text-lg md:text-xl font-bold mb-3 text-dark;
+ }
+.visualization-text p {
+ @apply text-sm md:text-base text-neutral;
+ }
+.blue-gradient {
+background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+ }
+.stats-grid {
+ @apply grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4 mb-6 md:mb-8;
+ }
+.stat-card {
+ @apply bg-white p-3 md:p-4 rounded-lg shadow-md text-center;
+ }
+.stat-number {
+ @apply text-xl md:text-2xl font-bold text-blue-dark;
+ }
+.stat-label {
+ @apply text-xs md:text-sm text-neutral mt-1;
+ }
+.color-legend {
+ @apply grid grid-cols-1 gap-3 mt-4;
+ }
+.color-item {
+ @apply flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg transition-all duration-200 hover:bg-gray-100;
+ }
+.color-dot {
+ @apply w-4 h-4 rounded-full mr-3 shadow-sm;
+ }
+.header {
+ @apply bg-white shadow-sm sticky top-0 z-50;
+ }
+.nav-link {
+ @apply text-neutral hover:text-primary transition-colors font-medium text-sm md:text-base;
+ }
+.nav-link.active {
+ @apply text-primary;
+ }
+.mobile-menu-btn {
+ @apply md:hidden text-neutral focus:outline-none;
+ }
+.mobile-menu {
+ @apply md:hidden hidden bg-white border-t;
+ }
+.story-marker {
+ @apply inline-flex items-center justify-center w-6 h-6 md:w-8 md:h-8 bg-accent text-white rounded-full font-bold text-xs md:text-sm mr-2;
+ }
+.pattern-meaning {
+ @apply bg-blue-50 border-l-4 border-accent p-4 rounded-lg my-4 text-sm md:text-base;
+ }
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+.chart-container {
+ @apply p-3;
+ }
+.chart-container canvas {
+max-height: 250px !important;
+ }
+.color-legend {
+ @apply text-xs;
+ }
+section {
+ @apply py-8;
+ }
+.hero-title {
+ @apply text-3xl;
+ }
+.hero-subtitle {
+ @apply text-base;
+ }
+/* Swipeable hint for mobile charts */
+.chart-container::after {
+content: 'Tap to interact';
+ @apply absolute bottom-2 right-2 text-xs text-gray-400 md:hidden;
+ }
+/* Better touch targets */
+.nav-link {
+ @apply py-2;
+ }
+button, a {
+min-height: 44px;
+min-width: 44px;
+ }
+ }
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+.chart-container canvas {
+max-height: 300px !important;
+ }
+ }
+ }
+</style>
+</head>
+<body class="font-inter bg-background text-dark">
+<!-- Navigation Bar -->
+<header class="header">
+<div class="container mx-auto px-4 py-3 flex justify-between items-center">
+<a href="./index.html" class="text-xl md:text-2xl font-bold text-blue-dark flex items-center space-x-2">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-8 h-8 md:w-10 md:h-10">
+<circle cx="50" cy="50" r="45" fill="#3B82F6" opacity="0.2" />
+<path d="M30,30 L70,30 L70,70 L30,70 Z" fill="none" stroke="#1A3263" stroke-width="4" />
+<circle cx="50" cy="50" r="15" fill="#7BAEA0" />
+<path d="M40,40 Q50,25 60,40 T50,65 T40,40" fill="#E3B778" />
+</svg>
+<span class="font-serif hidden sm:inline">ChinaPorcelain</span>
+</a>
+<nav class="hidden md:flex items-center space-x-6 lg:space-x-8">
+<a href="./index.html" class="nav-link">Home</a>
+<a href="./research.html" class="nav-link">Research</a>
+<a href="./ontology.html" class="nav-link">Ontology</a>
+<a href="./visualization.html" class="nav-link active">Visualization</a>
+<a href="./aboutus.html" class="nav-link">About</a>
+</nav>
+<button id="mobile-menu-button" class="mobile-menu-btn p-2">
+<i class="fas fa-bars text-xl"></i>
+</button>
+</div>
+<div id="mobile-menu" class="mobile-menu">
+<div class="container mx-auto px-4 py-2 flex flex-col space-y-2">
+<a href="./index.html" class="nav-link py-3 px-4 rounded-lg hover:bg-gray-50">Home</a>
+<a href="./research.html" class="nav-link py-3 px-4 rounded-lg hover:bg-gray-50">Research</a>
+<a href="./ontology.html" class="nav-link py-3 px-4 rounded-lg hover:bg-gray-50">Ontology</a>
+<a href="./visualization.html" class="nav-link active py-3 px-4 rounded-lg hover:bg-gray-50">Visualization</a>
+<a href="./aboutus.html" class="nav-link py-3 px-4 rounded-lg hover:bg-gray-50">About</a>
+</div>
+</div>
+</header>
+<!-- Prologue: Setting the Scene -->
+<section class="py-12 md:py-16 blue-gradient">
+<div class="container mx-auto px-4 text-center max-w-4xl">
+<h1 class="hero-title text-3xl sm:text-4xl md:text-5xl font-bold mb-4 md:mb-6 text-blue-dark font-serif">
+ The Journey of Chinese Porcelain to Europe
+</h1>
+<p class="hero-subtitle text-base sm:text-lg md:text-xl text-neutral max-w-3xl mx-auto mb-6 md:mb-8 leading-relaxed px-4">
+ A digital narrative of cultural exchange, artistic evolution, and technological mastery
+ told through 3,372 porcelain artifacts spanning 1,300 years of history.
+</p>
+<!-- Key Statistics as Story Elements -->
+<div class="stats-grid max-w-3xl mx-auto">
+<div class="stat-card">
+<div class="stat-number">3,372</div>
+<div class="stat-label">Artifacts</div>
+</div>
+<div class="stat-card">
+<div class="stat-number">1,300+</div>
+<div class="stat-label">Years</div>
+</div>
+<div class="stat-card">
+<div class="stat-number">107</div>
+<div class="stat-label">Museums</div>
+</div>
+<div class="stat-card">
+<div class="stat-number">2</div>
+<div class="stat-label">Continents</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Chapter 1: Journey Through Time and Space -->
+<section id="chapter-1" class="py-12 md:py-16 bg-white">
+<div class="container mx-auto px-4">
+<div class="chapter-title">
+<span><span class="story-marker">1</span>CHAPTER ONE</span>
+<h2>Journey Through Time and Space</h2>
+</div>
+<p class="narrative-text">
+ From the Tang Dynasty kilns to European palaces, Chinese porcelain traveled across continents
+ and centuries. The Qing Dynasty (1644-1912) marks the golden age of this cultural exchange,
+ when European fascination with "white gold" reached its peak.
+</p>
+<!-- Historical Timeline -->
+<div class="chart-container">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-hourglass-half mr-2 text-accent"></i>
+<span class="hidden sm:inline">Dynasties and Their Porcelain Legacy</span>
+<span class="sm:hidden">Timeline</span>
+</h3>
+<div class="relative h-[250px] md:h-[350px]">
+<canvas id="historicalTimelineChart"></canvas>
+</div>
+<p class="mt-3 text-xs md:text-sm text-neutral">
+ The Qing Dynasty accounts for 66.3% of dated pieces, coinciding with the height of maritime trade.
+</p>
+</div>
+<!-- Geographic Distribution Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 mt-8">
+<!-- Map -->
+<div class="lg:col-span-8">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-globe-europe mr-2 text-accent"></i>
+ European Collections Today
+</h3>
+<div class="map-container">
+<div id="map" class="w-full h-full rounded-xl"></div>
+</div>
+</div>
+<!-- Country Statistics -->
+<div class="lg:col-span-4">
+<div class="visualization-text">
+<h3>The European Guardians</h3>
+<p class="mt-2 mb-4 text-sm">
+ Distribution reflects historical trade patterns and collecting traditions.
+</p>
+<div class="space-y-2 md:space-y-3">
+<div class="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg">
+<div class="flex items-center">
+<div class="w-3 h-3 md:w-4 md:h-4 bg-porcelain-blue mr-2 md:mr-3 rounded-full"></div>
+<span class="text-sm md:text-base font-medium">Austria</span>
+</div>
+<span class="text-xs md:text-sm font-bold">714</span>
+</div>
+<div class="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg">
+<div class="flex items-center">
+<div class="w-3 h-3 md:w-4 md:h-4 bg-porcelain-cyan mr-2 md:mr-3 rounded-full"></div>
+<span class="text-sm md:text-base font-medium">Belgium</span>
+</div>
+<span class="text-xs md:text-sm font-bold">635</span>
+</div>
+<div class="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg">
+<div class="flex items-center">
+<div class="w-3 h-3 md:w-4 md:h-4 bg-porcelain-yellow mr-2 md:mr-3 rounded-full"></div>
+<span class="text-sm md:text-base font-medium">Netherlands</span>
+</div>
+<span class="text-xs md:text-sm font-bold">423</span>
+</div>
+<div class="flex items-center justify-between p-2 md:p-3 bg-gray-50 rounded-lg">
+<div class="flex items-center">
+<div class="w-3 h-3 md:w-4 md:h-4 bg-porcelain-red mr-2 md:mr-3 rounded-full"></div>
+<span class="text-sm md:text-base font-medium">UK</span>
+</div>
+<span class="text-xs md:text-sm font-bold">204</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Top Institutions -->
+<div class="chart-container mt-8">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-building-columns mr-2 text-accent"></i>
+ Museum Collections
+</h3>
+<div class="relative h-[300px] md:h-[400px]">
+<canvas id="institutionsChart"></canvas>
+</div>
+<p class="mt-3 text-xs md:text-sm text-neutral">
+ MAK Vienna leads with 714 pieces, reflecting Austria's role as a cultural gateway.
+</p>
+</div>
+</div>
+</section>
+<!-- Chapter 2: Origins and Innovation -->
+<section id="chapter-2" class="py-12 md:py-16 bg-background">
+<div class="container mx-auto px-4">
+<div class="chapter-title">
+<span><span class="story-marker">2</span>CHAPTER TWO</span>
+<h2>Origins and Innovation</h2>
+</div>
+<p class="narrative-text">
+ For centuries, Chinese kilns guarded the secret of true porcelain. When Europeans finally
+ cracked the code, they didn't just copy—they created fusion traditions, blending Eastern
+ techniques with Western aesthetics.
+</p>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 mb-8">
+<!-- Chinese Kilns -->
+<div class="chart-container">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-fire mr-2 text-accent"></i>
+ Chinese Kilns
+</h3>
+<div class="relative h-[250px] md:h-[350px]">
+<canvas id="chineseKilnsChart"></canvas>
+</div>
+<p class="mt-3 text-xs md:text-sm text-neutral">
+ Ding, Jingdezhen, and Dehua set global standards.
+</p>
+</div>
+<!-- European Centers -->
+<div class="chart-container">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-industry mr-2 text-accent"></i>
+ European Innovation
+</h3>
+<div class="relative h-[250px] md:h-[350px]">
+<canvas id="europeanCentersChart"></canvas>
+</div>
+<p class="mt-3 text-xs md:text-sm text-neutral">
+ Delft created Europe's unique fusion style.
+</p>
+</div>
+</div>
+<!-- Material & Techniques Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+<!-- Material Types -->
+<div class="chart-container">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-cubes mr-2 text-accent"></i>
+ Material Mastery
+</h3>
+<div class="relative h-[250px] md:h-[350px]">
+<canvas id="materialTypeChart"></canvas>
+</div>
+<p class="mt-3 text-xs md:text-sm text-neutral">
+ True porcelain: kaolin clay fired at extreme temperatures.
+</p>
+</div>
+<!-- Glazing Techniques -->
+<div class="chart-container">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-layer-group mr-2 text-accent"></i>
+ Glazing Techniques
+</h3>
+<div class="relative h-[250px] md:h-[350px]">
+<canvas id="glazingTechniquesChart"></canvas>
+</div>
+<p class="mt-3 text-xs md:text-sm text-neutral">
+ Underglaze decoration required mastery of chemistry and art.
+</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Chapter 3: Art and Meaning -->
+<section id="chapter-3" class="py-12 md:py-16 bg-white">
+<div class="container mx-auto px-4">
+<div class="chapter-title">
+<span><span class="story-marker">3</span>CHAPTER THREE</span>
+<h2>Art and Meaning</h2>
+</div>
+<p class="narrative-text">
+ As Chinese porcelain adapted to European tastes, a fascinating cultural dialogue emerged.
+ Traditional motifs transformed, creating a visual language that spoke to both cultures.
+</p>
+<!-- Main Themes Distribution -->
+<div class="chart-container mb-8">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-paint-brush mr-2 text-accent"></i>
+ Decorative Themes
+</h3>
+<div class="relative h-[250px] md:h-[400px]">
+<canvas id="mainThemesChart"></canvas>
+</div>
+<p class="mt-3 text-xs md:text-sm text-neutral">
+ Floral dominance (29%) reflects European market influence on Chinese production.
+</p>
+</div>
+<!-- Pattern Meanings Box -->
+<div class="pattern-meaning">
+<h4 class="font-bold text-base md:text-lg mb-3 text-dark">Iconographic Analysis of Decorative Themes</h4>
+<div class="space-y-3">
+<div>
+<strong class="text-dark">Nature's Beauty: Botanical Motifs</strong>
+<p class="mt-1 text-sm">
+ The lotus embodies Buddhist enlightenment and purity emerging from mundane existence.
+ Prunus blossoms signify resilience and renewal, blooming in late winter as harbingers of spring.
+ The peony, known as the "king of flowers" in Chinese culture, denotes prosperity and noble bearing.
+ These botanical elements transcended mere decoration to become vehicles of philosophical and social meaning.
+</p>
+</div>
+<div>
+<strong class="text-dark">Human Stories: Figural Narratives</strong>
+<p class="mt-1 text-sm">
+ Female figures often depicted court ladies or mythological beings like Chang'e, representing idealized beauty and virtue.
+ Male figures encompassed scholars, immortals, and historical heroes, embodying Confucian values of learning and moral cultivation.
+ Boys, particularly in "hundred boys" motifs, symbolized fertility and familial continuity—themes that resonated
+ with European dynastic concerns.
+</p>
+</div>
+<div>
+<strong class="text-dark">Symbolic Creatures: Zoomorphic Imagery</strong>
+<p class="mt-1 text-sm">
+ Dragons represented imperial authority and cosmic power in Chinese cosmology, later reinterpreted as exotic fantasy in European contexts.
+ Birds, particularly phoenixes and cranes, signified transcendence and longevity.
+ Butterflies embodied transformation and conjugal happiness, while their delicate forms appealed to Rococo sensibilities.
+ This zoomorphic vocabulary facilitated cross-cultural dialogue through shared appreciation of natural forms despite divergent symbolic interpretations.
+</p>
+</div>
+</div>
+</div>
+<!-- Theme Details - Mobile Optimized -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8">
+<!-- Floral Breakdown -->
+<div class="chart-container p-3 md:p-4">
+<h4 class="text-sm md:text-md font-bold mb-2 md:mb-3 text-center">Nature's Beauty</h4>
+<div class="relative h-[200px] md:h-[250px]">
+<canvas id="floralDetailChart"></canvas>
+</div>
+</div>
+<!-- Figural Breakdown -->
+<div class="chart-container p-3 md:p-4">
+<h4 class="text-sm md:text-md font-bold mb-2 md:mb-3 text-center">Human Stories</h4>
+<div class="relative h-[200px] md:h-[250px]">
+<canvas id="figuralDetailChart"></canvas>
+</div>
+</div>
+<!-- Animal Breakdown -->
+<div class="chart-container p-3 md:p-4">
+<h4 class="text-sm md:text-md font-bold mb-2 md:mb-3 text-center">Symbolic Creatures</h4>
+<div class="relative h-[200px] md:h-[250px]">
+<canvas id="animalDetailChart"></canvas>
+</div>
+</div>
+</div>
+<!-- Colors & Forms Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+<!-- Traditional Colors -->
+<div class="chart-container">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-palette mr-2 text-accent"></i>
+ Traditional Colors
+</h3>
+<div class="relative h-[250px] md:h-[350px]">
+<canvas id="ceramicColorsChart"></canvas>
+</div>
+<p class="mt-3 text-xs md:text-sm text-neutral">
+ Blue and white: the perfect East-West aesthetic marriage.
+</p>
+</div>
+<!-- Artifact Types -->
+<div class="chart-container">
+<h3 class="text-base md:text-lg font-bold mb-3 md:mb-4 flex items-center">
+<i class="fas fa-shapes mr-2 text-accent"></i>
+ Forms and Functions
+</h3>
+<div class="relative h-[250px] md:h-[350px]">
+<canvas id="artifactTypesChart"></canvas>
+</div>
+<p class="mt-3 text-xs md:text-sm text-neutral">
+ Universal dining vessels adapted to different cultural practices.
+</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Epilogue: Continuing the Story -->
+<section class="py-12 md:py-16 bg-background">
+<div class="container mx-auto px-4">
+<div class="chapter-title">
+<span>EPILOGUE</span>
+<h2>The Story Continues</h2>
+</div>
+<p class="narrative-text mb-8">
+ These 3,372 artifacts are cultural ambassadors that continue to tell the story of
+ human creativity and exchange. Each piece invites us to imagine the hands that
+ shaped it, the ships that carried it, and the lives it touched.
+</p>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+<div class="visualization-text">
+<h3 class="text-sm md:text-base"><i class="fas fa-chart-line mr-2 text-accent"></i> Trade Patterns</h3>
+<p class="text-xs md:text-sm mt-2">
+ Qing Dynasty peak reveals the golden age of maritime cultural exchange.
+</p>
+</div>
+<div class="visualization-text">
+<h3 class="text-sm md:text-base"><i class="fas fa-paint-brush mr-2 text-accent"></i> Cultural Fusion</h3>
+<p class="text-xs md:text-sm mt-2">
+ Adapted motifs show artistic dialogue between civilizations.
+</p>
+</div>
+<div class="visualization-text">
+<h3 class="text-sm md:text-base"><i class="fas fa-search mr-2 text-accent"></i> Mysteries</h3>
+<p class="text-xs md:text-sm mt-2">
+ 72.7% unknown kilns remind us stories remain untold.
+</p>
+</div>
+<div class="visualization-text">
+<h3 class="text-sm md:text-base"><i class="fas fa-database mr-2 text-accent"></i> Digital Future</h3>
+<p class="text-xs md:text-sm mt-2">
+ New technologies reveal hidden connections and meanings.
+</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Footer -->
+<footer class="bg-dark text-white py-6 md:py-8">
+<div class="container mx-auto px-4 text-center">
+<p class="text-xs md:text-sm">
+&copy; 2024 Chinese Porcelain Digital Narrative. A digital humanities project.
+</p>
+<p class="text-xs mt-2 text-gray-400">
+ Data from 3,372 records across 107 European institutions.
+</p>
+</div>
+</footer>
+<!-- JavaScript -->
+<script>
+// Wait for DOM to load
+document.addEventListener('DOMContentLoaded', function() {
+// Mobile menu
+const mobileMenuButton = document.getElementById('mobile-menu-button');
+const mobileMenu = document.getElementById('mobile-menu');
+if (mobileMenuButton && mobileMenu) {
+mobileMenuButton.addEventListener('click', () => {
+mobileMenu.classList.toggle('hidden');
+ });
+ }
+// Chart.js basic configuration with mobile optimizations
+Chart.defaults.font.family = 'Inter, sans-serif';
+Chart.defaults.font.size = window.innerWidth < 768 ? 10 : 12;
+Chart.defaults.responsive = true;
+Chart.defaults.maintainAspectRatio = false;
+Chart.defaults.plugins.legend.labels.boxWidth = window.innerWidth < 768 ? 12 : 15;
+// Color schemes
+const colorSchemes = {
+qualitative: ['#4A6FA5', '#82B3A8', '#D4B676', '#A65959', '#6D8B74', '#947EA8', '#D28A67', '#C892A1']
+ };
+// Check if mobile
+const isMobile = window.innerWidth < 768;
+// 1. Historical Timeline Chart
+const historicalTimelineCtx = document.getElementById('historicalTimelineChart');
+if (historicalTimelineCtx) {
+new Chart(historicalTimelineCtx, {
+type: 'line',
+data: {
+labels: isMobile ?
+ ['Tang', 'Song', 'Yuan', 'Ming', 'Qing', 'Rep.', 'Mod.'] :
+ ['Tang\n(618-907)', 'Song\n(960-1279)', 'Yuan\n(1279-1368)',
+'Ming\n(1368-1644)', 'Qing\n(1644-1912)', 'Republic\n(1912-1949)', 'Modern\n(1949-)'],
+datasets: [{
+label: 'Artifacts',
+data: [356, 135, 23, 255, 2237, 206, 798],
+borderColor: '#4A6FA5',
+backgroundColor: 'rgba(74, 111, 165, 0.1)',
+borderWidth: isMobile ? 2 : 3,
+pointBackgroundColor: '#4A6FA5',
+pointRadius: isMobile ? 4 : 6,
+fill: true,
+tension: 0.3
+ }]
+ },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false }
+ },
+scales: {
+y: {
+beginAtZero: true,
+ticks: { font: { size: isMobile ? 9 : 11 } },
+title: { display: !isMobile, text: 'Number of Artifacts' }
+ },
+x: {
+ticks: { font: { size: isMobile ? 9 : 11 } },
+title: { display: !isMobile, text: 'Chinese Dynasties' }
+ }
+ }
+ }
+ });
+ }
+// 2. Top Institutions
+const institutionsCtx = document.getElementById('institutionsChart');
+if (institutionsCtx) {
+new Chart(institutionsCtx, {
+type: 'bar',
+data: {
+labels: isMobile ?
+ ['MAK Vienna', 'Royal Inst.', 'Rijksmus.', 'V&A', 'MAK Bud.', 'INHA', 'Danish', 'German'] :
+ ['MAK Vienna', 'Royal Institute BE', 'Rijksmuseum', 'V&A Museum',
+'MAK Budapest', 'INHA France', 'Danish Agency', 'German Doc Center'],
+datasets: [{
+label: 'Records',
+data: [714, 635, 423, 204, 153, 124, 121, 108],
+backgroundColor: colorSchemes.qualitative,
+borderRadius: 4
+ }]
+ },
+options: {
+indexAxis: 'y',
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false }
+ },
+scales: {
+x: {
+beginAtZero: true,
+ticks: { font: { size: isMobile ? 9 : 11 } },
+title: { display: !isMobile, text: 'Number of Records' }
+ },
+y: {
+ticks: { font: { size: isMobile ? 9 : 11 } }
+ }
+ }
+ }
+ });
+ }
+// 3. Map
+const mapElement = document.getElementById('map');
+if (mapElement) {
+const map = L.map('map', {
+zoomControl: !isMobile,
+dragging: !isMobile,
+touchZoom: true,
+scrollWheelZoom: false
+ }).setView([52.0, 10.0], isMobile ? 3 : 4);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+attribution: '&copy; OpenStreetMap'
+ }).addTo(map);
+const countries = [
+ { name: "Austria", lat: 47.5162, lng: 14.5501, count: 714, percentage: 21.2 },
+ { name: "Belgium", lat: 50.5039, lng: 4.4699, count: 635, percentage: 18.8 },
+ { name: "Netherlands", lat: 52.1326, lng: 5.2913, count: 423, percentage: 12.5 },
+ { name: "United Kingdom", lat: 54.7024, lng: -3.2766, count: 204, percentage: 6.1 },
+ { name: "France", lat: 46.2276, lng: 2.2137, count: 124, percentage: 3.7 },
+ { name: "Hungary", lat: 47.1625, lng: 19.5033, count: 153, percentage: 4.5 },
+ { name: "Denmark", lat: 56.2639, lng: 9.5018, count: 121, percentage: 3.6 },
+ { name: "Germany", lat: 51.1657, lng: 10.4515, count: 108, percentage: 3.2 }
+ ];
+const colorMap = {
+'Austria': '#4A6FA5',
+'Belgium': '#82B3A8',
+'Netherlands': '#D4B676',
+'United Kingdom': '#A65959',
+'France': '#6D8B74',
+'Hungary': '#947EA8',
+'Denmark': '#D28A67',
+'Germany': '#C892A1'
+ };
+countries.forEach(country => {
+const marker = L.circleMarker([country.lat, country.lng], {
+radius: isMobile ? Math.sqrt(country.count) / 3 + 3 : Math.sqrt(country.count) / 2 + 5,
+fillColor: colorMap[country.name],
+color: '#fff',
+weight: 2,
+opacity: 1,
+fillOpacity: 0.8
+ }).addTo(map);
+marker.bindPopup(`
+ <div class="font-bold text-sm">${country.name}</div>
+ <div class="text-xs mt-1">Records: ${country.count}</div>
+ <div class="text-xs">Percentage: ${country.percentage}%</div>
+ `);
+ });
+ }
+// 4. Chinese Kilns Chart - 改为柱状图，使用蓝色系
+const chineseKilnsCtx = document.getElementById('chineseKilnsChart');
+if (chineseKilnsCtx) {
+new Chart(chineseKilnsCtx, {
+type: 'bar',
+data: {
+labels: ['Ding', 'Jingdezhen', 'Dehua', 'Jun', 'Export', 'Ru', 'Ge', 'Longquan'],
+datasets: [{
+label: 'Production Sites',
+data: [168, 134, 95, 78, 51, 35, 30, 9],
+backgroundColor: [
+'rgba(29, 78, 216, 0.8)',    // 深蓝色
+'rgba(37, 99, 235, 0.8)',    // 中蓝色
+'rgba(59, 130, 246, 0.8)',   // 亮蓝色
+'rgba(96, 165, 250, 0.8)',   // 天蓝色
+'rgba(34, 197, 94, 0.8)',    // 青绿色
+'rgba(20, 184, 166, 0.8)',   // 青色
+'rgba(6, 182, 212, 0.8)',    // 青蓝色
+'rgba(14, 165, 233, 0.8)'    // 浅蓝色
+],
+borderRadius: 4,
+borderWidth: 0
+ }]
+ },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false }
+ },
+scales: {
+y: {
+beginAtZero: true,
+ticks: { font: { size: isMobile ? 9 : 11 } },
+title: { display: !isMobile, text: 'Number of Artifacts' }
+ },
+x: {
+ticks: {
+font: { size: isMobile ? 9 : 11 },
+maxRotation: isMobile ? 45 : 0,
+minRotation: isMobile ? 45 : 0
+ }
+ }
+ }
+ }
+ });
+ }
+// 5. European Centers Chart - 改为柱状图，使用橙色系
+const europeanCentersCtx = document.getElementById('europeanCentersChart');
+if (europeanCentersCtx) {
+new Chart(europeanCentersCtx, {
+type: 'bar',
+data: {
+labels: isMobile ?
+ ['Delft', 'Belgium', 'Antwerp', 'Meissen'] :
+ ['Delft (Netherlands)', 'Belgium-unspecified', 'Antwerp (Belgium)', 'Meissen (Germany)'],
+datasets: [{
+label: 'Production Centers',
+data: [107, 48, 43, 10],
+backgroundColor: [
+'rgba(251, 146, 60, 0.8)',   // 橙色
+'rgba(250, 204, 21, 0.8)',   // 黄色
+'rgba(254, 240, 138, 0.8)',  // 浅黄色
+'rgba(253, 186, 116, 0.8)'   // 浅橙色
+],
+borderRadius: 4,
+borderWidth: 0
+ }]
+ },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false }
+ },
+scales: {
+y: {
+beginAtZero: true,
+ticks: { font: { size: isMobile ? 9 : 11 } },
+title: { display: !isMobile, text: 'Number of Artifacts' }
+ },
+x: {
+ticks: {
+font: { size: isMobile ? 9 : 11 },
+maxRotation: isMobile ? 45 : 0,
+minRotation: isMobile ? 45 : 0
+ }
+ }
+ }
+ }
+ });
+ }
+// 6. Artifact Types Chart
+const artifactTypesCtx = document.getElementById('artifactTypesChart');
+if (artifactTypesCtx) {
+new Chart(artifactTypesCtx, {
+type: 'bar',
+data: {
+labels: ['Plate', 'Bowl', 'Vase', 'Cup', 'Pot', 'Bottle', 'Jar', 'Box'],
+datasets: [{
+label: 'Count',
+data: [662, 442, 350, 350, 230, 82, 73, 41],
+backgroundColor: colorSchemes.qualitative,
+borderRadius: 4
+ }]
+ },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false }
+ },
+scales: {
+y: {
+beginAtZero: true,
+ticks: { font: { size: isMobile ? 9 : 11 } },
+title: { display: !isMobile, text: 'Number of Artifacts' }
+ },
+x: {
+ticks: {
+font: { size: isMobile ? 9 : 11 },
+maxRotation: isMobile ? 45 : 0,
+minRotation: isMobile ? 45 : 0
+ }
+ }
+ }
+ }
+ });
+ }
+// 7. Ceramic Colors Chart
+const ceramicColorsCtx = document.getElementById('ceramicColorsChart');
+if (ceramicColorsCtx) {
+const colorData = [
+ { label: 'Blue & White', count: 644, color: '#1E5A8E' },
+ { label: 'Gold', count: 245, color: '#C9A961' },
+ { label: 'Green', count: 224, color: '#5A7A5E' },
+ { label: 'Red', count: 213, color: '#B53737' },
+ { label: 'Famille Rose', count: 210, color: '#D4A5A5' },
+ { label: 'Brown', count: 209, color: '#6B4A3A' },
+ { label: 'Multicolor', count: 102, color: '#947EA8' }
+ ];
+new Chart(ceramicColorsCtx, {
+type: 'doughnut',
+data: {
+labels: colorData.map(d => d.label),
+datasets: [{
+data: colorData.map(d => d.count),
+backgroundColor: colorData.map(d => d.color),
+borderWidth: 3,
+borderColor: '#ffffff'
+ }]
+ },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+cutout: isMobile ? '50%' : '60%',
+plugins: {
+legend: {
+position: 'bottom',
+labels: {
+padding: isMobile ? 5 : 10,
+font: { size: isMobile ? 9 : 11 }
+ }
+ }
+ }
+ }
+ });
+ }
+// 8. Material Type Chart
+const materialTypeCtx = document.getElementById('materialTypeChart');
+if (materialTypeCtx) {
+new Chart(materialTypeCtx, {
+type: 'bar',
+data: {
+labels: isMobile ?
+ ['Unspec.', 'Porcelain', 'Earthen.', 'Ceramic', 'Stone.'] :
+ ['Unspecified', 'Porcelain', 'Earthenware', 'Ceramic', 'Stoneware'],
+datasets: [{
+label: 'Items',
+data: [1720, 1330, 191, 106, 25],
+backgroundColor: ['#E5E7EB', '#4A6FA5', '#D4B676', '#A65959', '#6D8B74'],
+borderRadius: 6
+ }]
+ },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false }
+ },
+scales: {
+y: {
+beginAtZero: true,
+ticks: { font: { size: isMobile ? 9 : 11 } },
+title: { display: !isMobile, text: 'Number of Items' }
+ },
+x: {
+ticks: {
+font: { size: isMobile ? 9 : 11 },
+maxRotation: isMobile ? 45 : 0,
+minRotation: isMobile ? 45 : 0
+ }
+ }
+ }
+ }
+ });
+ }
+// 9. Glazing Techniques
+const glazingTechniquesCtx = document.getElementById('glazingTechniquesChart');
+if (glazingTechniquesCtx) {
+new Chart(glazingTechniquesCtx, {
+type: 'doughnut',
+data: {
+labels: isMobile ?
+ ['Undergl.', 'Blue-W', 'Fam.Rose', 'Overgl.', 'Celadon', 'Transfer', 'Other'] :
+ ['Underglaze', 'Blue White', 'Famille Rose', 'Overglaze', 'Celadon', 'Transfer', 'Other'],
+datasets: [{
+data: [264, 238, 157, 117, 114, 100, 105],
+backgroundColor: colorSchemes.qualitative.slice(0, 7),
+borderWidth: 2,
+borderColor: '#fff'
+ }]
+ },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+cutout: isMobile ? '40%' : '50%',
+plugins: {
+legend: {
+position: 'bottom',
+labels: {
+padding: isMobile ? 5 : 15,
+font: { size: isMobile ? 9 : 11 }
+ }
+ }
+ }
+ }
+ });
+ }
+// 10. Main Themes Chart
+const mainThemesCtx = document.getElementById('mainThemesChart');
+if (mainThemesCtx) {
+new Chart(mainThemesCtx, {
+type: 'bar',
+data: {
+labels: isMobile ?
+ ['Floral', 'Geom.', 'Figural', 'Landsc.', 'Callig.', 'Animal', 'Symbol.'] :
+ ['Floral', 'Geometric', 'Figural', 'Landscape', 'Calligraphy', 'Animal', 'Symbolic'],
+datasets: [{
+label: 'Items',
+data: [1241, 766, 741, 647, 471, 282, 142],
+backgroundColor: '#5B7C99',
+borderRadius: 6
+ }]
+ },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+legend: { display: false }
+ },
+scales: {
+y: {
+beginAtZero: true,
+ticks: { font: { size: isMobile ? 9 : 11 } },
+title: { display: !isMobile, text: 'Number of Items' }
+ },
+x: {
+ticks: {
+font: { size: isMobile ? 9 : 11 },
+maxRotation: isMobile ? 45 : 0,
+minRotation: isMobile ? 45 : 0
+ }
+ }
+ }
+ }
+ });
+ }
+// 11. Theme Detail Charts
+const themeDetails = [
+ {
+id: 'floralDetailChart',
+labels: isMobile ?
+ ['General', 'Lotus', 'Prunus', 'Peony', 'Others'] :
+ ['General Floral', 'Lotus', 'Prunus', 'Peony', 'Others'],
+data: [772, 65, 44, 34, 326],
+colors: ['#D4A5A5', '#A8DADC', '#457B9D', '#A8B4A5', '#E9C46A']
+ },
+ {
+id: 'figuralDetailChart',
+labels: isMobile ?
+ ['General', 'Women', 'Men', 'Boys', 'Others'] :
+ ['General Figures', 'Women', 'Men', 'Boys', 'Others'],
+data: [356, 126, 70, 39, 150],
+colors: ['#D8A48F', '#8FB4C9', '#A5C9A5', '#F0D18F', '#C8A8D8']
+ },
+ {
+id: 'animalDetailChart',
+labels: ['Birds', 'Dragon', 'Butterfly', 'Animals', 'Others'],
+data: [116, 31, 21, 21, 93],
+colors: ['#E8B4B4', '#F5E0A3', '#A3C4E8', '#B4D4B4', '#D8C4E8']
+ }
+ ];
+themeDetails.forEach(detail => {
+const ctx = document.getElementById(detail.id);
+if (ctx) {
+new Chart(ctx, {
+type: 'doughnut',
+data: {
+labels: detail.labels,
+datasets: [{
+data: detail.data,
+backgroundColor: detail.colors,
+borderWidth: 2,
+borderColor: '#fff'
+ }]
+ },
+options: {
+responsive: true,
+maintainAspectRatio: false,
+cutout: isMobile ? '40%' : '50%',
+plugins: {
+legend: {
+position: 'bottom',
+labels: {
+padding: isMobile ? 5 : 10,
+font: { size: isMobile ? 8 : 10 }
+ }
+ }
+ }
+ }
+ });
+ }
+ });
+ });
+</script>
+</body>
+</html>

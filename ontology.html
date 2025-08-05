@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="Chinese Porcelain in Europe: Interactive Knowledge Map Ontology">
+    <meta name="keywords" content="Chinese porcelain, Europe, ontology, knowledge map, digital cultural heritage, interactive">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Interactive Knowledge Map Ontology - Chinese Porcelain in Europe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#235887',
+                        secondary: '#10B981',
+                        accent: '#F59E0B',
+                        neutral: '#6B7280',
+                        dark: '#1F2937',
+                        porcelain: {
+                            blue: '#4A6FA5',
+                            cyan: '#82B3A8',
+                            yellow: '#D4B676',
+                            red: '#A65959',
+                            green: '#6D8B74',
+                            purple: '#947EA8',
+                            orange: '#D28A67',
+                            pink: '#C892A1',
+                            brown: '#A68C78',
+                            beige: '#E8E4D6',
+                            lightCyan: 'rgba(55, 220, 214, 0.7)'
+                        },
+                        background: '#f0f8ff',
+                        blue: {
+                            light: '#DBEAFE',
+                            DEFAULT: '#3B82F6',
+                            dark: '#1D4ED8'
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                        serif: ['Georgia', 'serif'],
+                    },
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Styles -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .chart-container {
+                @apply rounded-xl shadow-lg overflow-hidden bg-white p-4 mb-6 transition-all duration-300 hover:shadow-xl;
+            }
+            .map-container {
+                @apply rounded-xl shadow-lg overflow-hidden h-[350px] mb-6 transition-all duration-300 hover:shadow-xl;
+            }
+            .section-title {
+                @apply mb-12 text-center;
+            }
+            .section-title span {
+                @apply text-blue font-bold text-sm uppercase tracking-wider;
+            }
+            .section-title h2 {
+                @apply text-[clamp(1.8rem,4vw,2.8rem)] font-bold mt-2 text-blue-dark font-serif;
+            }
+            .visualization-text {
+                @apply p-6 bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-xl;
+            }
+            .visualization-text h3 {
+                @apply text-xl font-bold mb-3 text-dark;
+            }
+            .visualization-text p {
+                @apply text-neutral;
+            }
+            .tooltip-custom {
+                @apply absolute invisible bg-dark text-white text-sm px-3 py-2 rounded shadow-lg z-50 pointer-events-none max-w-xs;
+            }
+            .header {
+                @apply bg-white shadow-sm sticky top-0 z-50;
+            }
+            .nav-link {
+                @apply text-neutral hover:text-primary transition-colors font-medium;
+            }
+            .nav-link.active {
+                @apply text-primary;
+            }
+            .mobile-menu-btn {
+                @apply md:hidden text-neutral focus:outline-none;
+            }
+            .mobile-menu {
+                @apply md:hidden hidden bg-white border-t;
+            }
+            .blue-gradient {
+                background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+            }
+        }
+    </style>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f0f7ff;
+            color: #333;
+            line-height: 1.6;
+            scroll-behavior: smooth;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-top: 20px;
+        }
+
+        .section-title span {
+            display: block;
+            font-size: 18px;
+            color: #4facfe;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .section-title h2 {
+            font-size: 36px;
+            color: #0f3460;
+            position: relative;
+            padding-bottom: 20px;
+        }
+
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: #4facfe;
+            border-radius: 2px;
+        }
+
+        .ontology-container {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+
+        .class-hierarchy {
+            flex: 1;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+
+        .class-hierarchy h3 {
+            color: #0f3460;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e6f2ff;
+        }
+
+        .class-list {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .class-list ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .class-list li {
+            cursor: pointer;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+            background-color: #f0f7ff;
+            position: relative;
+            border-left: 4px solid #4facfe;
+        }
+
+        .class-list li:hover {
+            background-color: #e0f0ff;
+            transform: translateX(5px);
+        }
+
+        .class-list li i {
+            margin-right: 10px;
+            color: #4facfe;
+        }
+
+        .ontology-visualization {
+            flex: 2;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .ontology-visualization h3 {
+            color: #0f3460;
+            margin-bottom: 20px;
+        }
+
+        #knowledgeMap {
+            width: 100%;
+            height: 900px;
+            border: 1px solid #e6f2ff;
+            border-radius: 8px;
+            background-color: #f8fbff;
+            margin-bottom: 20px;
+            overflow: hidden;
+            min-width: 0;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .map-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+
+        .instructions {
+            color: #666;
+            font-style: italic;
+            font-size: 14px;
+            max-width: 300px;
+        }
+
+        /* 层级控制样式 */
+        .layer-controls {
+            width: 100%;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .layer-control-title {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .layer-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .layer-btn {
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .layer-btn:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .layer-btn.active {
+            background: #4facfe;
+            color: white;
+            border-color: #4facfe;
+            box-shadow: 0 2px 4px rgba(79, 172, 254, 0.3);
+        }
+
+        .export-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .export-btn {
+            padding: 8px 16px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .export-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+        }
+
+        .reset-view {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .reset-view:hover {
+            background-color: #5a6268;
+            transform: translateY(-1px);
+        }
+
+        /* 节点和连线样式 */
+        .node-circle {
+            stroke: #fff;
+            stroke-width: 2;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .node-label {
+            font-family: 'Microsoft YaHei', 'SimHei', Arial, sans-serif;
+            font-weight: 500;
+            text-anchor: middle;
+            dominant-baseline: central;
+            pointer-events: none;
+            fill: #333;
+        }
+
+        .link-line {
+            stroke: #999;
+            stroke-opacity: 0.6;
+            stroke-width: 2;
+        }
+
+        /* 搜索框样式 */
+        .search-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 5px;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            width: 200px;
+        }
+
+        .search-btn {
+            padding: 8px 12px;
+            background: #4facfe;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* 分区背景样式 */
+        .zone-background {
+            fill: rgba(79, 172, 254, 0.08);
+            stroke: rgba(79, 172, 254, 0.3);
+            stroke-width: 2;
+            stroke-dasharray: 8,4;
+            rx: 12;
+            ry: 12;
+        }
+
+        .zone-label {
+            font-size: 15px;
+            font-weight: bold;
+            fill: #1a3a5f;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            pointer-events: none;
+            font-size: 12px;
+            max-width: 250px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .scroll-offset {
+            position: relative;
+            top: -70px;
+            visibility: hidden;
+        }
+
+        @media (max-width: 992px) {
+            .ontology-container {
+                flex-direction: column;
+            }
+
+            .map-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .layer-buttons, .export-controls {
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .legend {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .scroll-offset {
+                top: -50px;
+            }
+
+            .layer-buttons {
+                flex-direction: column;
+            }
+
+            .layer-btn, .export-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-background text-dark">
+    <!-- Navigation Bar -->
+    <header class="header">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="./index.html" class="text-2xl font-bold text-blue-dark flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-10 h-10">
+                    <circle cx="50" cy="50" r="45" fill="#3B82F6" opacity="0.2" />
+                    <path d="M30,30 L70,30 L70,70 L30,70 Z" fill="none" stroke="#1A3263" stroke-width="4" />
+                    <circle cx="50" cy="50" r="15" fill="#7BAEA0" />
+                    <path d="M40,40 Q50,25 60,40 T50,65 T40,40" fill="#E3B778" />
+                </svg>
+                <span class="font-serif">ChinaPorcelain</span>
+            </a>
+
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="./index.html" class="nav-link">Home</a>
+                <a href="./research.html" class="nav-link">Research</a>
+                <a href="./ontology.html" class="nav-link active">Ontology</a>
+                <a href="./visualization.html" class="nav-link">Visualization</a>
+                <a href="./aboutus.html" class="nav-link">About</a>
+            </nav>
+
+            <button id="mobile-menu-button" class="mobile-menu-btn">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+
+        <div id="mobile-menu" class="mobile-menu">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-3">
+                <a href="./index.html" class="nav-link py-2 px-4 rounded-lg hover:bg-gray-50">Home</a>
+                <a href="./research.html" class="nav-link py-2 px-4 rounded-lg hover:bg-gray-50">Research</a>
+                <a href="./ontology.html" class="nav-link active py-2 px-4 rounded-lg hover:bg-gray-50">Ontology</a>
+                <a href="./visualization.html" class="nav-link py-2 px-4 rounded-lg hover:bg-gray-50">Visualization</a>
+                <a href="./aboutus.html" class="nav-link py-2 px-4 rounded-lg hover:bg-gray-50">About</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 滚动偏移锚点 -->
+    <div class="scroll-offset" id="ontology"></div>
+
+    <!-- Hero Section -->
+    <section class="py-16 blue-gradient">
+        <div class="container mx-auto px-4 text-center max-w-4xl">
+            <h1 class="text-4xl md:text-5xl font-bold mb-6 text-blue-dark font-serif">
+                Chinese Porcelain in European Collections
+            </h1>
+            <p class="text-xl text-neutral max-w-2xl mx-auto">
+                Interactive Knowledge Map Ontology for Digital Cultural Heritage Research
+            </p>
+            <div class="mt-8 flex justify-center gap-4">
+                <a href="#knowledgeMap" class="bg-blue hover:bg-blue-dark text-white px-6 py-3 rounded-lg transition-colors">
+                    Explore Ontology
+                </a>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Ontology Section -->
+    <section id="ontology" class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="section-title">
+                <span>ONTOLOGY STRUCTURE</span>
+                <h2>Chinese Porcelain in Europe Knowledge Map</h2>
+            </div>
+
+            <div class="ontology-container">
+                <div class="class-hierarchy">
+                    <h3><i class="fas fa-sitemap mr-2 text-accent"></i> Class Hierarchy</h3>
+                    <div class="class-list" id="classList">
+                        <!-- Class hierarchy will be generated here -->
+                    </div>
+                </div>
+
+                <div class="ontology-visualization">
+                    <h3><i class="fas fa-project-diagram mr-2 text-accent"></i> Interactive Knowledge Map</h3>
+                    <div id="knowledgeMap"></div>
+
+                    <div class="map-controls">
+                        <div class="legend">
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #1a3a5f;"></div>
+                                <span>Root Classes (Level 1)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #2a9d8f;"></div>
+                                <span>Primary Categories (Level 2)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #e9c46a;"></div>
+                                <span>Sub-Categories (Level 3)</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-color" style="background-color: #e76f51;"></div>
+                                <span>Leaf Classes (Level 4+)</span>
+                            </div>
+                        </div>
+
+                        <div class="instructions">
+                            <i class="fas fa-info-circle mr-1"></i> Use mouse wheel to zoom, drag to pan, click nodes to highlight
+                        </div>
+
+                        <!-- 层级控制区域 -->
+                        <div class="layer-controls">
+                            <div class="layer-control-title">
+                                <i class="fas fa-layer-group mr-2"></i>Display Options:
+                            </div>
+                            <div class="layer-buttons">
+                                <button class="layer-btn active" data-max-level="2">Levels 1-2</button>
+                                <button class="layer-btn" data-max-level="3" data-zoned="false">Levels 1-3</button>
+                                <button class="layer-btn" data-max-level="3" data-zoned="true">Level 3 Zones</button>
+                                <button class="layer-btn" data-max-level="4">All Levels</button>
+                            </div>
+                            <div class="export-controls">
+                                <button id="exportSVG" class="export-btn">
+                                    <i class="fas fa-download mr-1"></i>Export SVG
+                                </button>
+                                <button id="exportPNG" class="export-btn">
+                                    <i class="fas fa-camera mr-1"></i>Export PNG
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="reset-view" id="resetView">
+                        <i class="fas fa-sync-alt mr-1"></i> Reset View
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- 节点悬停提示元素 -->
+    <div id="tooltip" class="tooltip" style="display: none;"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 移动端菜单切换
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // 平滑滚动
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    mobileMenu.classList.add('hidden');
+
+                    const targetId = this.getAttribute('href');
+                    if (targetId === '#') return;
+
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // 1. 定义完整树形数据（已删除Chinese_Ladies_Porcelain_in_Europe分支）
+            const treeData = {
+                name: "Chinese_Porcelain_in_Europe",
+                level: 1,
+                children: [
+                    {
+                        name: "DescriptiveMetadata",
+                        level: 1,
+                        children: [
+                            { name: "ColoredDrawing", level: 2, children: [] },
+                            { name: "Decorations", level: 2, children: [] },
+                            { name: "Descriptions", level: 2, children: [] },
+                            { name: "FiringTechniques", level: 2, children: [] },
+                            {
+                                name: "Function", level: 2,
+                                children: [
+                                    { name: "FunctionCategory", level: 3, children: [] },
+                                    { name: "FunctionDescription", level: 3, children: [] }
+                                ]
+                            },
+                            { name: "Glaze", level: 2, children: [] },
+                            { name: "Inscriptions", level: 2, children: [] },
+                            {
+                                name: "Paste", level: 2,
+                                children: [
+                                    { name: "PasteColor", level: 3, children: [] },
+                                    { name: "PasteMaterial", level: 3, children: [] },
+                                    {
+                                        name: "Pastefiguring", level: 3,
+                                        children: [
+                                            { name: "PastefiguringDescription", level: 4, children: [] },
+                                            { name: "PastefiguringTechniques", level: 4, children: [] }
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                name: "ProductionPlace", level: 2,
+                                children: [
+                                    { name: "ProductionKilnSites", level: 3, children: [] },
+                                    { name: "ProductionPlaceDescription", level: 3, children: [] },
+                                    { name: "ProductionPlaceLocation", level: 3, children: [] }
+                                ]
+                            },
+                            {
+                                name: "Shape", level: 2,
+                                children: [
+                                    { name: "ShapeDescription", level: 3, children: [] },
+                                    { name: "ShapeImage", level: 3, children: [] }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        name: "ExtendedMetadata",
+                        level: 1,
+                        children: [
+                            { name: "Digitalization", level: 2, children: [] },
+                            { name: "Domentations", level: 2, children: [] },
+                            { name: "RelatedCollections", level: 2, children: [] },
+                            { name: "RelatedEvents", level: 2, children: [] },
+                            { name: "RelatedPeople", level: 2, children: [] }
+                        ]
+                    },
+                    {
+                        name: "Metadata_for_Management",
+                        level: 1,
+                        children: [
+                            {
+                                name: "Damage", level: 2,
+                                children: [
+                                    { name: "CompletenessLevel", level: 3, children: [] },
+                                    {
+                                        name: "DamageCause", level: 3,
+                                        children: [
+                                            { name: "DamageDescriptions", level: 4, children: [] }
+                                        ]
+                                    },
+                                    { name: "DamagePosition", level: 3, children: [] }
+                                ]
+                            },
+                            { name: "DateofStorage", level: 2, children: [] },
+                            {
+                                name: "Identifier", level: 2,
+                                children: [
+                                    { name: "Other_Identifiers", level: 3, children: [] }
+                                ]
+                            },
+                            { name: "Level", level: 2, children: [] },
+                            {
+                                name: "Measurements", level: 2,
+                                children: [
+                                    { name: "Diameter", level: 3, children: [] },
+                                    { name: "Height", level: 3, children: [] },
+                                    { name: "Length", level: 3, children: [] },
+                                    { name: "Mass", level: 3, children: [] },
+                                    { name: "OtherMeasurements", level: 3, children: [] },
+                                    { name: "Volume", level: 3, children: [] },
+                                    { name: "Width", level: 3, children: [] }
+                                ]
+                            },
+                            { name: "Period", level: 2, children: [] },
+                            {
+                                name: "Preservation", level: 2,
+                                children: [
+                                    { name: "CurrentLocation", level: 3, children: [] },
+                                    { name: "Custodian", level: 3, children: [] },
+                                    { name: "PreservationCondition", level: 3, children: [] },
+                                    { name: "PreservationRecords", level: 3, children: [] }
+                                ]
+                            },
+                            {
+                                name: "ProvidingInstitution", level: 2,
+                                children: [
+                                    { name: "ProvidingInstitutionCountry", level: 3, children: [] },
+                                    { name: "ProvidingInstitutionLocation", level: 3, children: [] }
+                                ]
+                            },
+                            { name: "Quantity", level: 2, children: [] },
+                            {
+                                name: "Source", level: 2,
+                                children: [
+                                    { name: "PreviousPlace", level: 3, children: [] },
+                                    { name: "SourceRecords", level: 3, children: [] },
+                                    { name: "WayofAcquired", level: 3, children: [] }
+                                ]
+                            },
+                            {
+                                name: "Title", level: 2,
+                                children: [
+                                    { name: "Other_titles", level: 3, children: [] },
+                                    { name: "Used_Titles", level: 3, children: [] }
+                                ]
+                            },
+                            { name: "TypeofTexture", level: 2, children: [] }
+                        ]
+                    }
+                ]
+            };
+
+            // 2. 生成类层次列表
+            function generateClassHierarchy(data, container) {
+                const ul = document.createElement('ul');
+
+                function createListItem(item) {
+                    const li = document.createElement('li');
+                    li.setAttribute('data-name', item.name);
+
+                    const icon = document.createElement('i');
+                    icon.className = getIconForLevel(item.level);
+                    li.appendChild(icon);
+
+                    li.appendChild(document.createTextNode(item.name));
+
+                    if (item.children && item.children.length > 0) {
+                        const childUl = document.createElement('ul');
+                        item.children.forEach(child => {
+                            childUl.appendChild(createListItem(child));
+                        });
+                        li.appendChild(childUl);
+                    }
+
+                    return li;
+                }
+
+                const li = createListItem(data);
+                ul.appendChild(li);
+                container.appendChild(ul);
+            }
+
+            // 3. 创建知识图谱（保持您的原始颜色并确保文字显示完整）
+            function createKnowledgeMap(data, maxLevel = 2, useZones = false) {
+                const container = document.getElementById('knowledgeMap');
+                
+                setTimeout(() => {
+                    const containerRect = container.getBoundingClientRect();
+                    const width = Math.max(containerRect.width || container.clientWidth || 800, 900);
+                    const height = 900;
+
+                    container.innerHTML = '';
+
+                    // 创建搜索框
+                    const searchContainer = document.createElement('div');
+                    searchContainer.className = 'search-container';
+                    
+                    const searchInput = document.createElement('input');
+                    searchInput.type = 'text';
+                    searchInput.placeholder = 'Search nodes...';
+                    searchInput.className = 'search-input';
+                    
+                    const searchButton = document.createElement('button');
+                    searchButton.innerHTML = '<i class="fas fa-search"></i>';
+                    searchButton.className = 'search-btn';
+                    
+                    searchContainer.appendChild(searchInput);
+                    searchContainer.appendChild(searchButton);
+                    container.appendChild(searchContainer);
+
+                    const svg = d3.select(container)
+                        .append("svg")
+                        .attr("width", width)
+                        .attr("height", height)
+                        .attr("viewBox", `0 0 ${width} ${height}`)
+                        .attr("preserveAspectRatio", "xMidYMid meet")
+                        .style("width", "100%")
+                        .style("height", "100%")
+                        .attr("id", "knowledge-map-svg");
+
+                    const g = svg.append("g");
+
+                    // 过滤数据只显示指定层级
+                    function filterDataByLevel(node, currentLevel = 1) {
+                        const filtered = {
+                            name: node.name,
+                            level: node.level,
+                            children: []
+                        };
+                        
+                        if (currentLevel < maxLevel && node.children) {
+                            filtered.children = node.children.map(child => 
+                                filterDataByLevel(child, currentLevel + 1)
+                            );
+                        }
+                        
+                        return filtered;
+                    }
+
+                    const filteredData = filterDataByLevel(data);
+                    const root = d3.hierarchy(filteredData);
+                    const nodes = root.descendants();
+                    const links = root.links();
+
+                    // 保持您的原始颜色方案
+                    const color = d3.scaleOrdinal()
+                        .domain([1, 2, 3, 4])
+                        .range(["#1a3a5f", "#2a9d8f", "#e9c46a", "#e76f51"]);
+
+                    // 如果启用分区显示且为第3层
+                    if (useZones && maxLevel === 3) {
+                        createZonedLayoutWithFullText(g, nodes, links, color, width, height);
+                    } else {
+                        createStandardLayoutWithFullText(g, nodes, links, color, width, height);
+                    }
+
+                    // 添加搜索功能
+                    function performSearch() {
+                        const searchTerm = searchInput.value.toLowerCase().trim();
+                        if (!searchTerm) {
+                            // 重置所有节点样式
+                            g.selectAll(".node circle").attr("opacity", 1).attr("stroke", "#fff").attr("stroke-width", 2);
+                            g.selectAll(".node text").attr("opacity", 1);
+                            return;
+                        }
+
+                        // 重置样式
+                        g.selectAll(".node circle").attr("opacity", 0.3);
+                        g.selectAll(".node text").attr("opacity", 0.3);
+                        
+                        // 找到匹配的节点
+                        let found = false;
+                        g.selectAll(".node").each(function(d) {
+                            if (d.data.name.toLowerCase().includes(searchTerm)) {
+                                d3.select(this).select("circle")
+                                    .attr("opacity", 1)
+                                    .attr("stroke", "#ff6b6b")
+                                    .attr("stroke-width", 3);
+                                d3.select(this).select("text")
+                                    .attr("opacity", 1)
+                                    .attr("font-weight", "bold");
+                                found = true;
+                            }
+                        });
+
+                        if (!found) {
+                            alert('No matching nodes found');
+                            g.selectAll(".node circle").attr("opacity", 1).attr("stroke", "#fff").attr("stroke-width", 2);
+                            g.selectAll(".node text").attr("opacity", 1);
+                        }
+                    }
+
+                    searchButton.addEventListener('click', performSearch);
+                    searchInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') performSearch();
+                    });
+
+                    return { 
+                        nodes, 
+                        links, 
+                        svg, 
+                        g, 
+                        initialTransform: { k: 1, x: width / 2, y: height / 2 },
+                        width,
+                        height
+                    };
+                }, 100);
+
+                return { nodes: [], links: [], svg: null, g: null, initialTransform: null };
+            }
+
+            // 4. 标准布局（确保文字完整显示）
+            function createStandardLayoutWithFullText(g, nodes, links, color, width, height) {
+                // 更宽松的力导向布局，给文字更多空间
+                const simulation = d3.forceSimulation(nodes)
+                    .force("link", d3.forceLink(links)
+                        .id(d => d.id)
+                        .distance(d => {
+                            // 根据文字长度动态调整距离
+                            const textLength = Math.max(d.source.data.name.length, d.target.data.name.length);
+                            return Math.max(150, textLength * 8 + 100);
+                        })
+                        .strength(0.7))
+                    .force("charge", d3.forceManyBody()
+                        .strength(d => {
+                            // 根据文字长度调整排斥力
+                            const textLength = d.data.name.length;
+                            return -(400 + textLength * 15);
+                        }))
+                    .force("center", d3.forceCenter(width / 2, height / 2))
+                    .force("collide", d3.forceCollide()
+                        .radius(d => {
+                            // 根据文字长度动态调整碰撞半径
+                            const textLength = d.data.name.length;
+                            return Math.max(40, textLength * 4 + 20);
+                        }))
+                    .force("x", d3.forceX(width / 2).strength(0.05))
+                    .force("y", d3.forceY(height / 2).strength(0.05));
+
+                // 创建连线
+                const link = g.selectAll(".link")
+                    .data(links)
+                    .enter().append("line")
+                    .attr("class", "link link-line")
+                    .attr("stroke-width", d => Math.max(1, 3 - d.target.depth * 0.5));
+
+                // 创建节点组
+                const node = g.selectAll(".node")
+                    .data(nodes)
+                    .enter().append("g")
+                    .attr("class", "node")
+                    .call(d3.drag()
+                        .on("start", dragstarted)
+                        .on("drag", dragged)
+                        .on("end", dragended));
+
+                // 节点圆圈
+                node.append("circle")
+                    .attr("class", "node-circle")
+                    .attr("r", d => {
+                        const baseRadius = 8;
+                        const levelBonus = (4 - d.depth) * 3;
+                        return Math.max(baseRadius, baseRadius + levelBonus);
+                    })
+                    .attr("fill", d => color(Math.min(d.depth + 1, 4)));
+
+                // 文本标签 - 确保完整显示
+                node.append("text")
+                    .attr("class", "node-label")
+                    .attr("dx", 0)
+                    .attr("dy", d => {
+                        const radius = Math.max(8, 8 + (4 - d.depth) * 3);
+                        return radius + 18;
+                    })
+                    .attr("font-size", d => {
+                        const baseSize = 11;
+                        const levelBonus = Math.max(0, (2 - d.depth) * 1);
+                        return Math.max(9, baseSize + levelBonus) + "px";
+                    })
+                    .attr("font-weight", d => d.depth <= 1 ? "bold" : "500")
+                    .text(d => d.data.name); // 显示完整文字，不截断
+
+                // 添加文本背景提高可读性
+                node.insert("rect", "text")
+                    .attr("class", "text-background")
+                    .attr("fill", "rgba(255, 255, 255, 0.9)")
+                    .attr("stroke", "rgba(0, 0, 0, 0.1)")
+                    .attr("stroke-width", 0.5)
+                    .attr("rx", 4)
+                    .attr("ry", 4);
+
+                // 更新文本背景尺寸
+                function updateTextBackground() {
+                    node.select(".text-background").each(function(d) {
+                        const textElement = d3.select(this.parentNode).select("text");
+                        const bbox = textElement.node().getBBox();
+                        d3.select(this)
+                            .attr("x", bbox.x - 6)
+                            .attr("y", bbox.y - 3)
+                            .attr("width", bbox.width + 12)
+                            .attr("height", bbox.height + 6);
+                    });
+                }
+
+                addInteractivity(g, node, simulation);
+
+                function dragstarted(event, d) {
+                    if (!event.active) simulation.alphaTarget(0.3).restart();
+                    d.fx = d.x;
+                    d.fy = d.y;
+                }
+
+                function dragged(event, d) {
+                    d.fx = event.x;
+                    d.fy = event.y;
+                }
+
+                function dragended(event, d) {
+                    if (!event.active) simulation.alphaTarget(0);
+                    d.fx = null;
+                    d.fy = null;
+                }
+
+                simulation.on("tick", () => {
+                    link
+                        .attr("x1", d => d.source.x)
+                        .attr("y1", d => d.source.y)
+                        .attr("x2", d => d.target.x)
+                        .attr("y2", d => d.target.y);
+
+                    node.attr("transform", d => `translate(${d.x},${d.y})`);
+                    updateTextBackground();
+                });
+
+                // 运行更多迭代以达到稳定状态
+                simulation.alpha(1).restart();
+                for (let i = 0; i < 400; ++i) simulation.tick();
+                updateTextBackground();
+            }
+
+            // 5. 分区布局（确保文字完整显示）
+            function createZonedLayoutWithFullText(g, nodes, links, color, width, height) {
+                // 按父类分组第3层节点
+                const level2Nodes = nodes.filter(d => d.depth === 1);
+                const zoneGroups = {};
+                
+                level2Nodes.forEach(level2Node => {
+                    if (level2Node.children && level2Node.children.length > 0) {
+                        zoneGroups[level2Node.data.name] = {
+                            parent: level2Node,
+                            children: level2Node.children
+                        };
+                    }
+                });
+
+                // 计算分区位置 - 给更多空间
+                const zoneCount = Object.keys(zoneGroups).length;
+                const cols = Math.min(2, zoneCount);
+                const rows = Math.ceil(zoneCount / cols);
+                
+                const zoneWidth = (width - 80) / cols;
+                const zoneHeight = (height - 160) / rows;
+                const margin = 30;
+
+                // 为每个分区创建背景和标签
+                let zoneIndex = 0;
+                Object.keys(zoneGroups).forEach(zoneName => {
+                    const row = Math.floor(zoneIndex / cols);
+                    const col = zoneIndex % cols;
+                    
+                    const zoneX = 40 + col * zoneWidth + margin;
+                    const zoneY = 120 + row * zoneHeight + margin;
+                    const zoneW = zoneWidth - 2 * margin;
+                    const zoneH = zoneHeight - 2 * margin;
+                    
+                    // 添加分区背景
+                    g.append("rect")
+                        .attr("class", "zone-background")
+                        .attr("x", zoneX)
+                        .attr("y", zoneY)
+                        .attr("width", zoneW)
+                        .attr("height", zoneH);
+                    
+                    // 添加分区标签 - 完整显示
+                    g.append("text")
+                        .attr("class", "zone-label")
+                        .attr("x", zoneX + zoneW / 2)
+                        .attr("y", zoneY + 20)
+                        .text(zoneName); // 完整显示区域名称
+                    
+                    zoneIndex++;
+                });
+
+                // 固定位置布局 - 更宽松的间距
+                zoneIndex = 0;
+                Object.keys(zoneGroups).forEach(zoneName => {
+                    const group = zoneGroups[zoneName];
+                    const row = Math.floor(zoneIndex / cols);
+                    const col = zoneIndex % cols;
+                    
+                    const zoneX = 40 + col * zoneWidth + margin;
+                    const zoneY = 120 + row * zoneHeight + margin;
+                    const zoneW = zoneWidth - 2 * margin;
+                    const zoneH = zoneHeight - 2 * margin;
+                    
+                    // 父节点位置
+                    group.parent.fx = zoneX + zoneW / 2;
+                    group.parent.fy = zoneY + 70;
+                    
+                    // 子节点位置 - 给文字更多空间
+                    const childCount = group.children.length;
+                    if (childCount > 0) {
+                        const availableWidth = zoneW - 60;
+                        const availableHeight = zoneH - 140;
+                        
+                        if (childCount === 1) {
+                            group.children[0].fx = zoneX + zoneW / 2;
+                            group.children[0].fy = zoneY + 130;
+                        } else if (childCount === 2) {
+                            group.children.forEach((child, index) => {
+                                child.fx = zoneX + 40 + (index * (availableWidth - 40));
+                                child.fy = zoneY + 130;
+                            });
+                        } else {
+                            const childCols = Math.min(2, childCount);
+                            const childRows = Math.ceil(childCount / childCols);
+                            
+                            group.children.forEach((child, index) => {
+                                const childRow = Math.floor(index / childCols);
+                                const childCol = index % childCols;
+                                
+                                child.fx = zoneX + 40 + (childCol * Math.max(120, availableWidth / childCols));
+                                child.fy = zoneY + 130 + (childRow * 80); // 增加行间距给文字更多空间
+                            });
+                        }
+                    }
+                    
+                    zoneIndex++;
+                });
+
+                // 根节点居中顶部
+                const rootNode = nodes.find(d => d.depth === 0);
+                if (rootNode) {
+                    rootNode.fx = width / 2;
+                    rootNode.fy = 60;
+                }
+
+                // 创建连线
+                const link = g.selectAll(".link")
+                    .data(links)
+                    .enter().append("line")
+                    .attr("class", "link link-line")
+                    .attr("stroke-width", 2);
+
+                // 创建节点
+                const node = g.selectAll(".node")
+                    .data(nodes)
+                    .enter().append("g")
+                    .attr("class", "node");
+
+                node.append("circle")
+                    .attr("class", "node-circle")
+                    .attr("r", d => {
+                        if (d.depth === 0) return 12;
+                        if (d.depth === 1) return 8;
+                        return 6;
+                    })
+                    .attr("fill", d => color(Math.min(d.depth + 1, 4)));
+
+                // 文本标签 - 完整显示，不截断
+                node.append("text")
+                    .attr("class", "node-label")
+                    .attr("dx", 0)
+                    .attr("dy", d => {
+                        if (d.depth === 0) return -18;
+                        if (d.depth === 1) return -12;
+                        return 22; // 增加间距避免重叠
+                    })
+                    .attr("font-size", d => {
+                        if (d.depth === 0) return "13px";
+                        if (d.depth === 1) return "11px";
+                        return "10px";
+                    })
+                    .attr("font-weight", d => d.depth <= 1 ? "bold" : "normal")
+                    .text(d => d.data.name); // 完整显示所有文字
+
+                // 添加文本背景
+                node.insert("rect", "text")
+                    .attr("class", "text-background")
+                    .attr("fill", "rgba(255, 255, 255, 0.9)")
+                    .attr("stroke", "rgba(0, 0, 0, 0.1)")
+                    .attr("stroke-width", 0.5)
+                    .attr("rx", 3)
+                    .attr("ry", 3)
+                    .each(function(d) {
+                        const textElement = d3.select(this.parentNode).select("text");
+                        const bbox = textElement.node().getBBox();
+                        d3.select(this)
+                            .attr("x", bbox.x - 5)
+                            .attr("y", bbox.y - 2)
+                            .attr("width", bbox.width + 10)
+                            .attr("height", bbox.height + 4);
+                    });
+
+                // 更新位置
+                link
+                    .attr("x1", d => d.source.fx || d.source.x)
+                    .attr("y1", d => d.source.fy || d.source.y)
+                    .attr("x2", d => d.target.fx || d.target.x)
+                    .attr("y2", d => d.target.fy || d.target.y);
+
+                node.attr("transform", d => `translate(${d.fx || d.x},${d.fy || d.y})`);
+
+                addInteractivity(g, node, null);
+            }
+
+            // 6. 添加交互功能
+            function addInteractivity(g, node, simulation) {
+                // 添加缩放功能
+                const zoom = d3.zoom()
+                    .scaleExtent([0.3, 3])
+                    .on("zoom", (event) => {
+                        g.attr("transform", event.transform);
+                    });
+
+                d3.select("#knowledge-map-svg").call(zoom);
+
+                // 节点交互
+                node.on("mouseover", (event, d) => {
+                    // 高亮当前节点
+                    d3.select(event.currentTarget).select("circle")
+                        .transition()
+                        .duration(200)
+                        .attr("r", function() {
+                            const currentRadius = +d3.select(this).attr("r");
+                            return currentRadius * 1.3;
+                        })
+                        .attr("stroke-width", 3);
+
+                    // 显示tooltip
+                    const tooltip = d3.select("#tooltip");
+                    const childrenCount = d.children ? d.children.length : 0;
+                    const description = getNodeDescription(d.data.name);
+                    
+                    tooltip.html(`
+                        <div style="font-weight: bold; margin-bottom: 5px;">${d.data.name}</div>
+                        <div style="font-size: 11px; color: #ccc;">Level: ${d.depth + 1}</div>
+                        <div style="font-size: 11px; color: #ccc;">Children: ${childrenCount}</div>
+                        ${description ? `<div style="font-size: 10px; margin-top: 5px; color: #ddd;">${description}</div>` : ''}
+                    `)
+                        .style("left", (event.pageX + 15) + "px")
+                        .style("top", (event.pageY - 28) + "px")
+                        .style("display", "block");
+                })
+                .on("mouseout", (event, d) => {
+                    // 恢复节点大小
+                    d3.select(event.currentTarget).select("circle")
+                        .transition()
+                        .duration(200)
+                        .attr("r", function() {
+                            const currentRadius = +d3.select(this).attr("r");
+                            return currentRadius / 1.3;
+                        })
+                        .attr("stroke-width", 2);
+
+                    // 隐藏tooltip
+                    d3.select("#tooltip").style("display", "none");
+                })
+                .on("click", (event, d) => {
+                    // 节点点击效果
+                    highlightNodePath(d, g);
+                    
+                    // 更新左侧列表选中状态
+                    document.querySelectorAll('#classList li').forEach(li => {
+                        li.style.backgroundColor = '';
+                        if (li.getAttribute('data-name') === d.data.name) {
+                            li.style.backgroundColor = '#d1e7dd';
+                            li.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    });
+                });
+
+                // 双击重置视图
+                d3.select("#knowledge-map-svg").on("dblclick.zoom", function() {
+                    const svg = d3.select(this);
+                    svg.transition()
+                        .duration(750)
+                        .call(zoom.transform, d3.zoomIdentity);
+                });
+            }
+
+            // 7. 节点路径高亮
+            function highlightNodePath(targetNode, g) {
+                // 重置所有样式
+                g.selectAll(".node circle").attr("opacity", 0.3);
+                g.selectAll(".link").attr("opacity", 0.1);
+                g.selectAll(".node text").attr("opacity", 0.3);
+
+                // 获取路径上的所有节点
+                const pathNodes = [];
+                let current = targetNode;
+                while (current) {
+                    pathNodes.push(current);
+                    current = current.parent;
+                }
+
+                // 高亮路径节点
+                pathNodes.forEach(node => {
+                    g.selectAll(".node")
+                        .filter(d => d === node)
+                        .select("circle")
+                        .attr("opacity", 1)
+                        .attr("stroke", "#ff6b6b")
+                        .attr("stroke-width", 3);
+                    
+                    g.selectAll(".node")
+                        .filter(d => d === node)
+                        .select("text")
+                        .attr("opacity", 1)
+                        .attr("font-weight", "bold");
+                });
+
+                // 高亮路径连线
+                g.selectAll(".link")
+                    .filter(d => pathNodes.includes(d.source) && pathNodes.includes(d.target))
+                    .attr("opacity", 1)
+                    .attr("stroke", "#ff6b6b")
+                    .attr("stroke-width", 3);
+
+                // 3秒后恢复
+                setTimeout(() => {
+                    g.selectAll(".node circle")
+                        .transition()
+                        .duration(500)
+                        .attr("opacity", 1)
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 2);
+                    
+                    g.selectAll(".link")
+                        .transition()
+                        .duration(500)
+                        .attr("opacity", 0.6)
+                        .attr("stroke", "#999")
+                        .attr("stroke-width", 2);
+                    
+                    g.selectAll(".node text")
+                        .transition()
+                        .duration(500)
+                        .attr("opacity", 1)
+                        .attr("font-weight", function(d) {
+                            return d.depth <= 1 ? "bold" : "500";
+                        });
+                }, 3000);
+            }
+
+            // 8. 节点描述信息
+            function getNodeDescription(nodeName) {
+                const descriptions = {
+                    "Chinese_Porcelain_in_Europe": "Root ontology class representing Chinese porcelain artifacts in European collections",
+                    "DescriptiveMetadata": "Metadata describing the physical and artistic characteristics of porcelain pieces",
+                    "ExtendedMetadata": "Additional contextual information including documentation and relationships",
+                    "Metadata_for_Management": "Administrative metadata for collection management and preservation",
+                    "ColoredDrawing": "Information about painted decorations and their techniques",
+                    "Decorations": "Details of ornamental elements and motifs",
+                    "Function": "Intended use and purpose of the porcelain piece",
+                    "Glaze": "Surface treatment and finish characteristics",
+                    "ProductionPlace": "Location and context of manufacture",
+                    "Shape": "Physical form and structural characteristics",
+                    "Measurements": "Dimensional and physical properties",
+                    "Preservation": "Current condition and conservation status",
+                    "ProvidingInstitution": "Museum or collection holding the artifact",
+                    "Digitalization": "Digital representation and accessibility information"
+                };
+                return descriptions[nodeName] || "";
+            }
+
+            // 9. 导出功能
+            function addExportFunctionality() {
+                const exportSVGBtn = document.getElementById('exportSVG');
+                if (exportSVGBtn) {
+                    exportSVGBtn.addEventListener('click', function() {
+                        const svg = document.getElementById('knowledge-map-svg');
+                        if (!svg) return;
+                        
+                        const svgClone = svg.cloneNode(true);
+                        svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                        svgClone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+                        
+                        const serializer = new XMLSerializer();
+                        const svgString = serializer.serializeToString(svgClone);
+                        
+                        const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+                        const url = URL.createObjectURL(blob);
+                        
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `chinese-porcelain-ontology-${new Date().toISOString().split('T')[0]}.svg`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    });
+                }
+
+                const exportPNGBtn = document.getElementById('exportPNG');
+                if (exportPNGBtn) {
+                    exportPNGBtn.addEventListener('click', function() {
+                        const svg = document.getElementById('knowledge-map-svg');
+                        if (!svg) return;
+                        
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        const scale = 2;
+                        canvas.width = svg.clientWidth * scale;
+                        canvas.height = svg.clientHeight * scale;
+                        
+                        const svgClone = svg.cloneNode(true);
+                        svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                        
+                        const data = new XMLSerializer().serializeToString(svgClone);
+                        const img = new Image();
+                        
+                        img.onload = function() {
+                            ctx.scale(scale, scale);
+                            ctx.fillStyle = 'white';
+                            ctx.fillRect(0, 0, canvas.width / scale, canvas.height / scale);
+                            ctx.drawImage(img, 0, 0);
+                            
+                            canvas.toBlob(function(blob) {
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `chinese-porcelain-ontology-${new Date().toISOString().split('T')[0]}.png`;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                URL.revokeObjectURL(url);
+                            }, 'image/png');
+                        };
+                        
+                        const svgBlob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+                        const url = URL.createObjectURL(svgBlob);
+                        img.src = url;
+                    });
+                }
+            }
+
+            // 10. 渲染左侧导航栏
+            const classListContainer = document.getElementById('classList');
+            generateClassHierarchy(treeData, classListContainer);
+
+            // 11. 创建知识图谱和控制器
+            let knowledgeMapInstance = createKnowledgeMap(treeData, 2, false);
+            let currentMaxLevel = 2;
+            let currentUseZones = false;
+
+            // 12. 层级控制事件
+            document.querySelectorAll('.layer-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    currentMaxLevel = parseInt(this.dataset.maxLevel);
+                    currentUseZones = this.dataset.zoned === 'true';
+                    
+                    knowledgeMapInstance = createKnowledgeMap(treeData, currentMaxLevel, currentUseZones);
+                    
+                    setTimeout(() => {
+                        bindMapEvents();
+                        addExportFunctionality();
+                    }, 300);
+                });
+            });
+
+            // 13. 初始化功能
+            setTimeout(() => {
+                addExportFunctionality();
+            }, 500);
+
+            // 14. 绑定地图事件
+            function bindMapEvents() {
+                document.querySelectorAll('#classList li').forEach(li => {
+                    li.addEventListener('click', function() {
+                        const nodeName = this.getAttribute('data-name');
+                        
+                        // 更新列表样式
+                        document.querySelectorAll('#classList li').forEach(item => {
+                            item.style.backgroundColor = '';
+                        });
+                        this.style.backgroundColor = '#d1e7dd';
+
+                        // 在图中高亮对应节点
+                        const svg = d3.select("#knowledge-map-svg");
+                        const g = svg.select("g");
+                        
+                        g.selectAll(".node").each(function(d) {
+                            if (d.data.name === nodeName) {
+                                highlightNodePath(d, g);
+                            }
+                        });
+                    });
+                });
+            }
+
+            setTimeout(() => {
+                bindMapEvents();
+            }, 300);
+
+            // 15. 重置视图按钮
+            document.getElementById('resetView').addEventListener('click', function() {
+                if (knowledgeMapInstance && knowledgeMapInstance.svg) {
+                    const svg = knowledgeMapInstance.svg;
+                    const g = svg.select("g");
+                    const zoom = d3.zoom().scaleExtent([0.3, 3]);
+                    
+                    // 重置缩放
+                    svg.transition()
+                        .duration(750)
+                        .call(zoom.transform, d3.zoomIdentity);
+                    
+                    // 重置样式
+                    g.selectAll(".node circle")
+                        .attr("opacity", 1)
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 2);
+                    g.selectAll(".link")
+                        .attr("opacity", 0.6)
+                        .attr("stroke", "#999")
+                        .attr("stroke-width", 2);
+                    g.selectAll(".node text")
+                        .attr("opacity", 1)
+                        .attr("font-weight", function(d) {
+                            return d.depth <= 1 ? "bold" : "500";
+                        });
+                    
+                    // 重置列表选择
+                    document.querySelectorAll('#classList li').forEach(item => {
+                        item.style.backgroundColor = '';
+                    });
+                }
+            });
+
+            // 16. 响应式处理
+            function handleResize() {
+                if (knowledgeMapInstance && knowledgeMapInstance.svg) {
+                    const container = document.getElementById('knowledgeMap');
+                    const containerRect = container.getBoundingClientRect();
+                    const newWidth = Math.max(containerRect.width || container.clientWidth || 800, 900);
+                    
+                    knowledgeMapInstance.svg
+                        .attr("width", newWidth)
+                        .attr("viewBox", `0 0 ${newWidth} 900`);
+                }
+            }
+
+            window.addEventListener('resize', debounce(handleResize, 250));
+
+            // 17. 防抖函数
+            function debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+
+            // 辅助函数
+            function getIconForLevel(level) {
+                switch(level) {
+                    case 1: return 'fas fa-globe';
+                    case 2: return 'fas fa-shapes';
+                    case 3: return 'fas fa-folder-open';
+                    case 4: return 'fas fa-file-alt';
+                    default: return 'fas fa-dot-circle';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

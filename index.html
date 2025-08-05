@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Decoding Porcelain: A Digital Humanities Approach to Chinese Porcelain in European Collections">
+    <meta name="keywords" content="Chinese porcelain, digital humanities, Europeana, cultural heritage, ontology, metadata">
+    <title>Decoding Porcelain - Chinese Porcelain in European Collections</title>
+    
+    <!-- External Resources -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: '#f0f7ff',
+                        lightBlue: '#e6f0ff',
+                        primaryBlue: '#1A3263',
+                        secondaryBlue: '#2c5282',
+                        accentBlue: '#3b82f6',
+                        darkBlue: '#0c2040',
+                        cardBg: '#ffffff',
+                        highlight: '#7fbfff',
+                        accent: '#F59E0B',
+                    },
+                    fontFamily: {
+                        display: ['Playfair Display', 'serif'],
+                        body: ['Raleway', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.6s ease-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'scale-in': 'scaleIn 0.5s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        scaleIn: {
+                            '0%': { transform: 'scale(0.95)', opacity: '0' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #1A3263 0%, #3b82f6 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(26, 50, 99, 0.15);
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+        }
+        
+        .feature-icon {
+            background: linear-gradient(135deg, #3b82f6 0%, #1A3263 100%);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="font-body bg-background text-darkBlue min-h-screen">
+    <!-- Navigation -->
+    <header class="bg-white/90 backdrop-blur-sm shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-primaryBlue flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="w-10 h-10">
+                    <circle cx="50" cy="50" r="45" fill="#1A3263" opacity="0.1" />
+                    <path d="M30,30 L70,30 L70,70 L30,70 Z" fill="none" stroke="#1A3263" stroke-width="4" />
+                    <circle cx="50" cy="50" r="15" fill="#7BAEA0" />
+                    <path d="M40,40 Q50,25 60,40 T50,65 T40,40" fill="#3b82f6" />
+                </svg>
+                <span class="font-display">Decoding Porcelain</span>
+            </a>
+            
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="#" class="text-primaryBlue font-semibold border-b-2 border-primaryBlue pb-1">Home</a>
+                <a href="./research.html" class="text-secondaryBlue hover:text-primaryBlue transition-colors">Research</a>
+                <a href="./ontology.html" class="text-secondaryBlue hover:text-primaryBlue transition-colors">Ontology</a>
+                <a href="./visualization.html" class="text-secondaryBlue hover:text-primaryBlue transition-colors">Visualization</a>
+                <a href="https://github.com/liujunnn/DH-Thesis" target="_blank" class="text-secondaryBlue hover:text-primaryBlue transition-colors">
+                    <i class="fab fa-github text-xl"></i>
+                </a>
+            </nav>
+            
+            <button id="mobile-menu-button" class="md:hidden text-primaryBlue">
+                <i class="fas fa-bars text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+            <div class="container mx-auto px-4 py-2 flex flex-col space-y-2">
+                <a href="#" class="py-2 px-4 rounded hover:bg-lightBlue">Home</a>
+                <a href="./research.html" class="py-2 px-4 rounded hover:bg-lightBlue">Research</a>
+                <a href="./ontology.html" class="py-2 px-4 rounded hover:bg-lightBlue">Ontology</a>
+                <a href="./visualization.html" class="py-2 px-4 rounded hover:bg-lightBlue">Visualization</a>
+                <a href="https://github.com/liujunnn/DH-Thesis" target="_blank" class="py-2 px-4 rounded hover:bg-lightBlue">GitHub</a>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="relative py-20 md:py-32 overflow-hidden">
+        <div class="absolute inset-0 hero-gradient opacity-5"></div>
+        <div class="container mx-auto px-4 relative z-10">
+            <div class="max-w-4xl mx-auto text-center">
+                <h1 class="text-4xl md:text-6xl font-display font-bold text-primaryBlue mb-6 animate-fade-in">
+                    Decoding Porcelain
+                </h1>
+                <p class="text-xl md:text-2xl text-secondaryBlue mb-4 animate-slide-up" style="animation-delay: 0.2s">
+                    A Digital Humanities Approach to Chinese Porcelain in European Collections
+                </p>
+                <p class="text-lg text-secondaryBlue/80 mb-8 max-w-3xl mx-auto animate-slide-up" style="animation-delay: 0.4s">
+                    Challenging digital orientalism through relational ontologies and interactive visualizations of 3,372 artifacts from the Europeana database
+                </p>
+                
+                <div class="flex flex-col sm:flex-row justify-center gap-4 animate-scale-in" style="animation-delay: 0.6s">
+                    <a href="./ontology.html" class="bg-primaryBlue hover:bg-darkBlue text-white font-medium py-3 px-8 rounded-lg transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-project-diagram mr-2"></i> Explore Ontology
+                    </a>
+                    <a href="./visualization.html" class="border-2 border-primaryBlue text-primaryBlue hover:bg-primaryBlue hover:text-white font-medium py-3 px-8 rounded-lg transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-chart-line mr-2"></i> View Visualizations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Key Statistics -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-3xl font-display font-bold text-center text-primaryBlue mb-12">Research at a Glance</h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="stat-card rounded-xl p-6 text-center card-hover">
+                        <div class="text-3xl md:text-4xl font-bold text-primaryBlue mb-2">3,372</div>
+                        <div class="text-sm text-secondaryBlue">Artifacts Analyzed</div>
+                    </div>
+                    <div class="stat-card rounded-xl p-6 text-center card-hover">
+                        <div class="text-3xl md:text-4xl font-bold text-primaryBlue mb-2">107</div>
+                        <div class="text-sm text-secondaryBlue">European Museums</div>
+                    </div>
+                    <div class="stat-card rounded-xl p-6 text-center card-hover">
+                        <div class="text-3xl md:text-4xl font-bold text-primaryBlue mb-2">66.3%</div>
+                        <div class="text-sm text-secondaryBlue">Qing Dynasty Pieces</div>
+                    </div>
+                    <div class="stat-card rounded-xl p-6 text-center card-hover">
+                        <div class="text-3xl md:text-4xl font-bold text-primaryBlue mb-2">1,300+</div>
+                        <div class="text-sm text-secondaryBlue">Years of History</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Research Contribution -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-display font-bold text-primaryBlue mb-4">Research Contribution</h2>
+                    <p class="text-lg text-secondaryBlue max-w-3xl mx-auto">
+                        This thesis demonstrates that historical decontextualization of Chinese porcelain is actively replicated within digital infrastructures, requiring epistemological shifts in how we structure cultural knowledge.
+                    </p>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <!-- Feature 1 -->
+                    <div class="bg-white rounded-xl p-6 shadow-lg card-hover">
+                        <div class="feature-icon w-14 h-14 rounded-lg flex items-center justify-center text-white mb-4">
+                            <i class="fas fa-network-wired text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-primaryBlue mb-3">Relational Ontology</h3>
+                        <p class="text-secondaryBlue">
+                            Developed a non-hierarchical knowledge framework that challenges colonial cataloging logic through force-directed graph visualization
+                        </p>
+                    </div>
+                    
+                    <!-- Feature 2 -->
+                    <div class="bg-white rounded-xl p-6 shadow-lg card-hover">
+                        <div class="feature-icon w-14 h-14 rounded-lg flex items-center justify-center text-white mb-4">
+                            <i class="fas fa-database text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-primaryBlue mb-3">Metadata Analysis</h3>
+                        <p class="text-secondaryBlue">
+                            Revealed patterns of cultural translation and appropriation through quantitative analysis of 3,372 artifacts from Europeana
+                        </p>
+                    </div>
+                    
+                    <!-- Feature 3 -->
+                    <div class="bg-white rounded-xl p-6 shadow-lg card-hover">
+                        <div class="feature-icon w-14 h-14 rounded-lg flex items-center justify-center text-white mb-4">
+                            <i class="fas fa-globe text-xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-primaryBlue mb-3">Decolonial Framework</h3>
+                        <p class="text-secondaryBlue">
+                            Applied principles of relational accountability to create more equitable digital representations of cross-cultural heritage
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Key Findings Preview -->
+    <section class="py-16 bg-white">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto">
+                <h2 class="text-3xl font-display font-bold text-center text-primaryBlue mb-12">Key Findings</h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Geographic Distribution -->
+                    <div class="bg-gradient-to-br from-lightBlue to-white rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-primaryBlue mb-4">
+                            <i class="fas fa-map-marked-alt mr-2 text-accentBlue"></i>
+                            Geographic Distribution
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-secondaryBlue">Austria</span>
+                                <div class="flex items-center">
+                                    <div class="bg-primaryBlue/20 rounded-full h-2 w-32 mr-2">
+                                        <div class="bg-primaryBlue rounded-full h-2" style="width: 21.2%"></div>
+                                    </div>
+                                    <span class="font-bold text-primaryBlue">21.2%</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-secondaryBlue">Belgium</span>
+                                <div class="flex items-center">
+                                    <div class="bg-primaryBlue/20 rounded-full h-2 w-32 mr-2">
+                                        <div class="bg-primaryBlue rounded-full h-2" style="width: 18.8%"></div>
+                                    </div>
+                                    <span class="font-bold text-primaryBlue">18.8%</span>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-secondaryBlue">Netherlands</span>
+                                <div class="flex items-center">
+                                    <div class="bg-primaryBlue/20 rounded-full h-2 w-32 mr-2">
+                                        <div class="bg-primaryBlue rounded-full h-2" style="width: 12.5%"></div>
+                                    </div>
+                                    <span class="font-bold text-primaryBlue">12.5%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-sm text-secondaryBlue/80">
+                            Austria's dominance reflects Habsburg collecting strategies beyond maritime trade routes
+                        </p>
+                    </div>
+                    
+                    <!-- Cultural Translation -->
+                    <div class="bg-gradient-to-br from-lightBlue to-white rounded-xl p-6">
+                        <h3 class="text-xl font-bold text-primaryBlue mb-4">
+                            <i class="fas fa-palette mr-2 text-accentBlue"></i>
+                            Cultural Translation
+                        </h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-secondaryBlue">Blue & White Dominance</span>
+                                <span class="font-bold text-primaryBlue">19.1%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-secondaryBlue">Floral Motifs</span>
+                                <span class="font-bold text-primaryBlue">29.2%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-secondaryBlue">European Delftware</span>
+                                <span class="font-bold text-primaryBlue">51.4%</span>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-sm text-secondaryBlue/80">
+                            Patterns reveal systematic cultural domestication where Chinese aesthetics were overwrit with European meanings
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Call to Action -->
+    <section class="py-20">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-3xl font-display font-bold text-primaryBlue mb-6">
+                    Explore the Digital Intervention
+                </h2>
+                <p class="text-lg text-secondaryBlue mb-8">
+                    Discover how digital humanities can challenge colonial legacies and create more equitable representations of cultural heritage
+                </p>
+                
+                <div class="grid md:grid-cols-3 gap-6">
+                    <a href="./research.html" class="group bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div class="text-3xl text-accentBlue mb-3 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-microscope"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-primaryBlue mb-2">Research Method</h3>
+                        <p class="text-sm text-secondaryBlue">Learn about the methodology and theoretical framework</p>
+                    </a>
+                    
+                    <a href="./ontology.html" class="group bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div class="text-3xl text-accentBlue mb-3 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-primaryBlue mb-2">Interactive Ontology</h3>
+                        <p class="text-sm text-secondaryBlue">Navigate the relational knowledge framework</p>
+                    </a>
+                    
+                    <a href="./visualization.html" class="group bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <div class="text-3xl text-accentBlue mb-3 group-hover:scale-110 transition-transform">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-primaryBlue mb-2">Data Story</h3>
+                        <p class="text-sm text-secondaryBlue">Journey through centuries of cultural exchange</p>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="bg-primaryBlue text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto text-center">
+                <p class="mb-2">
+                    Master's Thesis in Digital Humanities | KU Leuven | 2024-2025
+                </p>
+                <p class="text-sm opacity-80">
+                    By Liujun Shang | Supervised by Prof. dr. Frederik Truyen & Prof. dr. Katrien Verbert
+                </p>
+                <div class="mt-4 flex justify-center space-x-4">
+                    <a href="https://github.com/liujunnn/DH-Thesis" target="_blank" class="hover:opacity-80 transition-opacity">
+                        <i class="fab fa-github text-xl"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-button').addEventListener('click', function() {
+            document.getElementById('mobile-menu').classList.toggle('hidden');
+        });
+        
+        // Add animation on scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver(function(entries) {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-in');
+                }
+            });
+        }, observerOptions);
+        
+        document.querySelectorAll('.card-hover').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
