@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-文本预处理模块
-功能：停用词管理、文本清洗、分词等
+Text Preprocessing Module
+
+Functions: Stopword management, text cleaning, tokenization, and language detection
+for processing multilingual porcelain metadata descriptions.
 """
 
 import re
@@ -10,6 +12,7 @@ from typing import Set, List, Dict, Any
 import nltk
 from nltk.corpus import stopwords
 
+# Attempt to download required NLTK data silently
 try:
     nltk.download('punkt', quiet=True)
     nltk.download('stopwords', quiet=True)
@@ -17,26 +20,40 @@ except:
     pass
 
 class TextPreprocessor:
-    """文本预处理器"""
+    """
+    Text Preprocessor for Porcelain Metadata
+    
+    Handles multilingual text cleaning, stopword removal, and tokenization
+    with special consideration for domain-specific porcelain terminology.
+    """
     
     def __init__(self):
-        # 初始化停用词
+        """
+        Initialize the text preprocessor with stopwords and core terms
+        """
+        # Initialize English stopwords from NLTK
         try:
             self.stop_words = set(stopwords.words('english'))
         except:
+            # Fallback to predefined stopwords if NLTK fails
             self.stop_words = self._get_default_stopwords()
         
-        # 领域特定停用词
+        # Domain-specific stopwords (museum/porcelain context)
         self.domain_stopwords = self._get_domain_stopwords()
         
-        # 合并所有停用词
+        # Combine all stopwords
         self.all_stopwords = self.stop_words.union(self.domain_stopwords)
         
-        # 核心瓷器术语（不被过滤）
+        # Core porcelain terms that should NOT be filtered out
         self.core_porcelain_terms = self._get_core_terms()
     
     def _get_default_stopwords(self) -> Set[str]:
-        """获取默认英语停用词"""
+        """
+        Get default English stopwords
+        
+        Returns:
+            Set of common English stopwords
+        """
         return {
             'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 
             'you', 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 
@@ -57,21 +74,27 @@ class TextPreprocessor:
         }
     
     def _get_domain_stopwords(self) -> Set[str]:
-        """获取领域特定停用词"""
+        """
+        Get domain-specific stopwords for museum/porcelain contexts
+        
+        Returns:
+            Set of domain-specific stopwords including multilingual terms,
+            metadata artifacts, and museum-related terminology
+        """
         return {
-            # 多语言常见词
+            # Multilingual common words (Swedish, Dutch, French, German, Italian)
             'def', 'och', 'som', 'den', 'det', 'ett', 'med', 'par', 'fut',
             'lieu', 'een', 'met', 'del', 'della', 'delle', 'dei', 'nel',
             'pour', 'dans', 'avec', 'sur', 'une', 'les', 'ces', 'von', 'mit',
             'der', 'die', 'das', 'und', 'ist', 'sind', 'wird', 'wurde',
             
-            # 元数据相关
+            # Metadata-related terms
             'note', 'vente', 'document', 'genre', 'fotogr', 'dnr', 'email',
             'http', 'edu', 'aat', 'vocab', 'getty', 'url', 'link', 'site',
             'item', 'object', 'artifact', 'collection', 'museum', 'archive',
             'unknown', 'unclear', 'possibly', 'probably', 'various', 'similar',
             
-            # 机构相关
+            # Museum and institution related
             'inst', 'coll', 'inv', 'donated', 'property', 'catalogue',
             'old', 'english', 'furniture', 'art', 'pavillon', 'laeken',
             'inventory', 'acquisition', 'bequest', 'gift', 'purchase',
@@ -80,77 +103,105 @@ class TextPreprocessor:
             'stockholm', 'bruxelles', 'amsterdam', 'london', 'paris',
             'sotheby', 'christie', 'puttick', 'simpson', 'woods', 'manson',
             
-            # 非英语瓷器通用词
+            # Non-English generic porcelain terms
             'porcel', 'kinesisk', 'porslin', 'porselein', 'porcellana',
             'teller', 'coupe', 'schale', 'piatto', 'assiette',
             'bodenmarke', 'dekor', 'fond',
             
-            # 其他
+            # Other multilingual terms
             'van', 'het', 'zijn', 'uit', 'aan', 'voor', 'wapen',
             'dames', 'twee', 'sous', 'cor', 'fleur', 'tasse',
             'vdn', 'undercup', 'mus', 'royaux', 'histoire'
         }
     
     def _get_core_terms(self) -> Set[str]:
-        """获取核心瓷器术语（不应被过滤）"""
+        """
+        Get core porcelain terminology that should be preserved
+        
+        Returns:
+            Set of important porcelain-related terms that should not be filtered out
+        """
         return {
-            # 材质
+            # Materials
             'porcelain', 'ceramic', 'pottery', 'stoneware', 'earthenware',
             'paste', 'soft paste', 'hard paste', 'clay',
             
-            # 器形
+            # Vessel shapes
             'vase', 'bowl', 'plate', 'cup', 'jar', 'pot', 'dish',
             'bottle', 'box', 'ewer', 'censer', 'teapot', 'saucer',
             'charger', 'platter', 'beaker', 'container',
             
-            # 装饰
+            # Decorative elements
             'flower', 'floral', 'dragon', 'phoenix', 'bird', 'figure',
             'landscape', 'geometric', 'pattern', 'decoration', 'painted',
             'decorated', 'design', 'motif', 'depicting',
             
-            # 颜色
+            # Colors
             'blue', 'white', 'red', 'green', 'yellow', 'black', 'gold',
             'brown', 'purple', 'pink', 'multicolor', 'polychrome',
             
-            # 釉色技术
+            # Glaze and techniques
             'glaze', 'underglaze', 'overglaze', 'enamel', 'celadon',
             'famille rose', 'famille verte', 'transfer', 'printed',
             
-            # 朝代时期
+            # Dynasties and periods
             'ming', 'qing', 'kangxi', 'qianlong', 'yongzheng', 'dynasty',
             'period', 'century', 'reign',
             
-            # 产地
+            # Production places
             'china', 'chinese', 'jingdezhen', 'export', 'canton',
             
-            # 功能
+            # Functions
             'tea', 'wine', 'ceremonial', 'decorative', 'ritual',
             
-            # 款识
+            # Marks and inscriptions
             'mark', 'base', 'inscription', 'character', 'seal'
         }
     
     def add_stopwords(self, words: List[str]):
-        """添加自定义停用词"""
+        """
+        Add custom stopwords to the filter list
+        
+        Args:
+            words: List of words to add as stopwords
+        """
         self.domain_stopwords.update(words)
         self.all_stopwords = self.stop_words.union(self.domain_stopwords)
     
     def remove_stopwords(self, words: List[str]):
-        """移除停用词"""
+        """
+        Remove words from the stopword list
+        
+        Args:
+            words: List of words to remove from stopwords
+        """
         for word in words:
             self.domain_stopwords.discard(word)
         self.all_stopwords = self.stop_words.union(self.domain_stopwords)
     
     def add_core_terms(self, terms: List[str]):
-        """添加核心术语"""
+        """
+        Add terms to the core terminology list (protected from filtering)
+        
+        Args:
+            terms: List of important terms to preserve
+        """
         self.core_porcelain_terms.update(terms)
     
     def simple_language_detect(self, text: str) -> str:
-        """简单的语言检测"""
+        """
+        Simple language detection based on character analysis
+        
+        Args:
+            text: Text to analyze
+            
+        Returns:
+            'en' for English text, 'other' for non-English text
+        """
         if not text:
             return 'en'
         
-        # 计算非ASCII字符的比例
+        # Calculate ratio of non-ASCII characters
         non_ascii_count = sum(1 for char in text if ord(char) > 127)
         total_chars = len(text)
         
@@ -159,11 +210,11 @@ class TextPreprocessor:
         
         non_ascii_ratio = non_ascii_count / total_chars
         
-        # 如果非ASCII字符超过30%，认为不是英语
+        # If more than 30% non-ASCII characters, likely not English
         if non_ascii_ratio > 0.3:
             return 'other'
         
-        # 检查常见的非英语词汇
+        # Check for common non-English marker words
         non_english_markers = ['och', 'som', 'den', 'det', 'ett', 'med', 
                              'delle', 'della', 'dans', 'avec', 'pour', 
                              'der', 'die', 'das', 'und']
@@ -172,51 +223,67 @@ class TextPreprocessor:
         marker_count = sum(1 for marker in non_english_markers 
                          if f' {marker} ' in f' {text_lower} ')
         
+        # If 3 or more non-English markers found, classify as non-English
         if marker_count >= 3:
             return 'other'
         
         return 'en'
     
     def preprocess_text(self, text: str) -> str:
-        """主要的文本预处理函数"""
+        """
+        Main text preprocessing function
+        
+        Performs comprehensive text cleaning including:
+        - URL and email removal
+        - Metadata artifact removal
+        - Language-specific processing
+        - Stopword filtering
+        - Token validation
+        
+        Args:
+            text: Raw text to preprocess
+            
+        Returns:
+            Cleaned and tokenized text string
+        """
         if not text:
             return ""
         
-        # 转小写
+        # Convert to lowercase
         text = str(text).lower()
         
-        # 移除URLs和email
+        # Remove URLs and emails
         text = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', text)
         text = re.sub(r'\S+@\S+', '', text)
         text = re.sub(r'www\.\S+', '', text)
         
-        # 移除元数据伪影
+        # Remove metadata artifacts
         metadata_patterns = [
-            r'\bdef\s+\w+\b',
+            r'\bdef\s+\w+\b',  # Definition patterns
             r'\b\w+\s+def\b',
             r'\bdef\s+def\b',
-            r'\bdnr\b',
-            r'\bfotogr\b',
-            r'\binst\s+coll\b',
-            r'\bcoll\s+pavillon\b',
-            r'\bpavillon\s+chinois\b',
-            r'\bchinois\s+laeken\b',
-            r'\bdonated\s+george\b',
-            r'\bproperty\s+of\b',
-            r'\bcatalogue\s+number\b',
-            r'\blot\s+\d+\b',
-            r'\bref\s+\d+\b'
+            r'\bdnr\b',  # Document numbers
+            r'\bfotogr\b',  # Photography references
+            r'\binst\s+coll\b',  # Institution collection
+            r'\bcoll\s+pavillon\b',  # Collection pavilion
+            r'\bpavillon\s+chinois\b',  # Chinese pavilion
+            r'\bchinois\s+laeken\b',  # Laeken Chinese
+            r'\bdonated\s+george\b',  # Donation info
+            r'\bproperty\s+of\b',  # Ownership info
+            r'\bcatalogue\s+number\b',  # Catalog references
+            r'\blot\s+\d+\b',  # Auction lot numbers
+            r'\bref\s+\d+\b'  # Reference numbers
         ]
         
         for pattern in metadata_patterns:
             text = re.sub(pattern, '', text, flags=re.IGNORECASE)
         
-        # 检测语言
+        # Detect language
         lang = self.simple_language_detect(text)
         
-        # 如果不是英语，进行特殊处理
+        # Language-specific processing
         if lang != 'en':
-            # 保留重要的瓷器相关术语
+            # Preserve important Chinese porcelain terms in non-English text
             important_terms = {
                 'qinghua', 'ciqi', 'fencai', 'wucai', 'doucai', 'yangcai',
                 'jihong', 'guan', 'ge', 'ru', 'ding', 'jun', 'cizhou',
@@ -226,7 +293,7 @@ class TextPreprocessor:
                 'celadon', 'porcelain', 'ceramic', 'pottery', 'stoneware'
             }
             
-            # 保护重要术语
+            # Protect important terms with placeholders
             protected_text = text
             term_placeholders = {}
             for i, term in enumerate(important_terms):
@@ -235,45 +302,45 @@ class TextPreprocessor:
                     term_placeholders[placeholder] = term
                     protected_text = protected_text.replace(term, placeholder)
             
-            # 只保留ASCII字符
+            # Keep only ASCII characters and spaces
             protected_text = re.sub(r'[^a-zA-Z0-9\s]', ' ', protected_text)
             
-            # 恢复保护的术语
+            # Restore protected terms
             for placeholder, term in term_placeholders.items():
                 protected_text = protected_text.replace(placeholder, term)
             
             text = protected_text
         else:
-            # 对于英语文本，移除非字母字符但保留空格
+            # For English text, remove non-alphabetic characters but keep spaces
             text = re.sub(r'[^a-zA-Z\s]', ' ', text)
         
-        # 移除多余空格
+        # Remove excess whitespace
         text = ' '.join(text.split())
         
-        # 分词并过滤
+        # Tokenize
         tokens = text.split()
         
-        # 过滤tokens
+        # Filter tokens
         filtered_tokens = []
         for token in tokens:
-            # 保留核心瓷器术语
+            # Always preserve core porcelain terms
             if token in self.core_porcelain_terms:
                 filtered_tokens.append(token)
                 continue
                 
-            # 跳过停用词
+            # Skip stopwords
             if token in self.all_stopwords:
                 continue
                 
-            # 跳过太短或太长的词
+            # Skip tokens that are too short or too long
             if len(token) <= 2 or len(token) > 20:
                 continue
                 
-            # 跳过纯数字
+            # Skip pure numbers
             if token.isdigit():
                 continue
                 
-            # 跳过重复字符的词
+            # Skip tokens with all identical characters
             if len(set(token)) == 1:
                 continue
             
@@ -282,12 +349,23 @@ class TextPreprocessor:
         return ' '.join(filtered_tokens)
     
     def extract_text_from_item(self, item: Dict[str, Any]) -> str:
-        """从数据项提取文本"""
+        """
+        Extract text from a data item
+        
+        Extracts and combines text from multiple fields with priority ordering
+        and language preference for English content.
+        
+        Args:
+            item: Dictionary containing metadata fields
+            
+        Returns:
+            Combined text string from relevant fields
+        """
         text_parts = []
         
-        # 优先级顺序
+        # Priority order for field extraction
         priority_fields = [
-            ('dcDescription', True),
+            ('dcDescription', True),  # (field_name, is_list)
             ('description', True),
             ('dcTitle', True),
             ('title', True),
@@ -299,7 +377,7 @@ class TextPreprocessor:
             if field_name in item:
                 field_data = item[field_name]
                 if is_list and isinstance(field_data, list):
-                    # 优先选择英语内容
+                    # Prioritize English content
                     english_parts = []
                     other_parts = []
                     
@@ -311,17 +389,19 @@ class TextPreprocessor:
                             else:
                                 other_parts.append(str(part))
                     
+                    # Add English parts first
                     text_parts.extend(english_parts)
+                    # If no English content, add up to 2 non-English parts
                     if not english_parts:
                         text_parts.extend(other_parts[:2])
                         
                 elif field_data and isinstance(field_data, str):
                     text_parts.append(field_data)
         
-        # 合并文本
+        # Combine all text parts
         combined_text = ' '.join([str(t) for t in text_parts if t])
         
-        # 限制长度
+        # Limit text length to prevent memory issues
         max_length = 2000
         if len(combined_text) > max_length:
             combined_text = combined_text[:max_length]
