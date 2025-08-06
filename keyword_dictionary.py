@@ -1,32 +1,84 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-关键词字典模块 - 优化版
-功能：管理瓷器相关的关键词字典，支持动态修改
-增强：更好的产地识别（包括代尔夫特和比利时）
+Keyword Dictionary Module for Cultural Heritage Metadata Extraction
+
+This module provides a comprehensive keyword dictionary system for identifying
+and normalizing cultural heritage terminology across multiple languages and
+cultures. It supports extraction of attributes from ceramic and pottery
+descriptions with a focus on both Eastern (Chinese) and Western (European,
+particularly Dutch/Delft) traditions.
+
+Key Features:
+- Multi-language keyword mappings for colors, shapes, decorations, etc.
+- Historical period and dynasty recognition
+- Production location normalization across language variants
+- Configurable keyword management with file persistence
+- Support for both Chinese imperial ceramics and European pottery traditions
+
+Author: [Your Name]
+Date: [Current Date]
+Version: 1.0
 """
 
 from typing import Dict, List, Set
 import json
 
 class KeywordDictionary:
-    """关键词字典管理器"""
+    """
+    Keyword Dictionary Manager for cultural heritage metadata extraction
+    
+    This class maintains comprehensive keyword mappings for extracting
+    structured information from unstructured text descriptions of ceramics,
+    pottery, and porcelain items. It includes specialized vocabulary for:
+    - Chinese imperial ceramics (Ming, Qing dynasties)
+    - European pottery (Delftware, Meissen, Sèvres)
+    - Cross-cultural export porcelain
+    
+    Attributes:
+        config_file: Optional path to JSON configuration file
+        color_keywords: Color terminology mappings
+        decoration_themes: Decorative motif categorizations
+        shape_keywords: Vessel form classifications
+        function_keywords: Functional use categories
+        material_keywords: Material composition terms
+        glaze_keywords: Glaze technique terminology
+        production_keywords: Production center identifications
+        period_keywords: Historical period mappings
+        place_normalization: Multi-language place name standardization
+    """
     
     def __init__(self, config_file: str = None):
+        """
+        Initialize the KeywordDictionary with default or custom keywords
+        
+        Args:
+            config_file: Optional path to JSON file containing custom keyword mappings
+        """
         self.config_file = config_file
         self._init_keywords()
         
-        # 如果提供了配置文件，尝试加载
+        # Load custom keywords from file if provided
         if config_file:
             self.load_from_file(config_file)
     
     def _init_keywords(self):
-        """初始化默认关键词字典"""
+        """
+        Initialize default keyword dictionaries with comprehensive terminology
         
-        # 颜色关键词
+        This method sets up the default keyword mappings covering:
+        - Traditional Chinese ceramic terminology
+        - European pottery terminology (especially Dutch/Delft)
+        - Modern classification systems
+        - Multi-language variations
+        """
+        
+        # Color keywords including traditional glaze colors and modern descriptions
         self.color_keywords = {
-            'blue and white': ['blue', 'white', 'blue and white', 'underglaze blue', 'cobalt blue', 'qinghua', 'blue white', 'delft blue', 'delfts blauw'],
-            'celadon': ['celadon', 'green glaze', 'greenish', 'longquan celadon', 'yue celadon', 'greenware', 'sea green'],
+            'blue and white': ['blue', 'white', 'blue and white', 'underglaze blue', 'cobalt blue', 
+                              'qinghua', 'blue white', 'delft blue', 'delfts blauw'],
+            'celadon': ['celadon', 'green glaze', 'greenish', 'longquan celadon', 'yue celadon', 
+                       'greenware', 'sea green'],
             'famille rose': ['famille rose', 'pink', 'rose', 'fencai', 'yangcai', 'enamel pink'],
             'famille verte': ['famille verte', 'green family', 'kangxi palette', 'wucai'],
             'red': ['red', 'copper red', 'iron red', 'sang de boeuf', 'oxblood', 'jihong', 'crimson'],
@@ -39,45 +91,52 @@ class KeywordDictionary:
             'multicolor': ['polychrome', 'multicolor', 'wucai', 'doucai', 'contrasting colors', 'five color']
         }
         
-        # 装饰主题关键词
+        # Decoration theme keywords covering Eastern and Western motifs
         self.decoration_themes = {
             'floral': ['flower', 'floral', 'peony', 'lotus', 'chrysanthemum', 
                       'prunus', 'bamboo', 'pine', 'plant', 'leaf', 'branch',
                       'bloom', 'blossom', 'orchid', 'camellia', 'magnolia', 
                       'plum blossom', 'rose', 'lily', 'iris', 'narcissus', 
                       'tree', 'foliage', 'vine', 'spray', 'flowers', 'petals', 
-                      'stems', 'buds', 'willow', 'tulip'],  # 添加郁金香（荷兰特色）
+                      'stems', 'buds', 'willow', 'tulip'],  # Added tulip (Dutch characteristic)
+            
             'figural': ['figure', 'people', 'scholar', 'lady', 'child', 'immortal',
                        'deity', 'warrior', 'official', 'sage', 'goddess', 
                        'emperor', 'court', 'attendant', 'maiden', 'monk', 
                        'buddha', 'bodhisattva', 'luohan', 'guanyin', 'figures', 
                        'person', 'man', 'woman', 'boy', 'dutch figure', 'european figure'],
+            
             'animal': ['dragon', 'phoenix', 'bird', 'crane', 'fish', 'deer', 
                       'lion', 'tiger', 'horse', 'butterfly', 'qilin', 'foo dog', 
                       'bat', 'magpie', 'peacock', 'eagle', 'carp', 'goldfish', 
                       'mandarin duck', 'rooster', 'rabbit', 'birds', 'animals'],
+            
             'landscape': ['landscape', 'mountain', 'river', 'pavilion', 'garden',
                          'rock', 'tree', 'cloud', 'moon', 'scenery', 'waterfall', 
                          'bridge', 'pagoda', 'temple', 'island', 'boat', 'shore', 
                          'cliff', 'wave', 'mist', 'mountains', 'hills', 'valley', 'lake',
-                         'windmill', 'canal', 'dutch landscape'],  # 添加荷兰景观元素
+                         'windmill', 'canal', 'dutch landscape'],  # Added Dutch landscape elements
+            
             'geometric': ['geometric', 'pattern', 'band', 'border', 'scroll',
                          'lattice', 'diaper', 'key-fret', 'meander', 'lozenge', 
                          'checkerboard', 'zigzag', 'diamond', 'hexagon', 'octagon', 
                          'circle', 'square', 'triangle', 'stripes', 'dots', 'lines'],
+            
             'calligraphy': ['character', 'inscription', 'poem', 'text', 'writing',
                            'calligraphy', 'seal script', 'kaishu', 'poetry', 
                            'verse', 'couplet', 'mark', 'characters', 'script'],
+            
             'symbolic': ['ruyi', 'shou', 'fu', 'lu', 'xi', 'bagua', 'taiji',
                         'yin yang', 'endless knot', 'auspicious', 'symbol',
                         'eight treasures', 'buddhist emblems', 'daoist emblems',
-                        'coat of arms', 'heraldic']  # 添加欧洲纹章元素
+                        'coat of arms', 'heraldic']  # Added European heraldic elements
         }
         
-        # 形状关键词
+        # Shape keywords for vessel forms
         self.shape_keywords = {
             'bowl': ['bowl', 'deep bowl', 'shallow bowl', 'tea bowl', 'rice bowl', 'lotus bowl'],
-            'vase': ['vase', 'meiping', 'baluster vase', 'bottle vase', 'gu', 'hu', 'zun', 'tulip vase'],  # 添加郁金香花瓶
+            'vase': ['vase', 'meiping', 'baluster vase', 'bottle vase', 'gu', 'hu', 'zun', 
+                    'tulip vase'],  # Added tulip vase (Dutch specialty)
             'jar': ['jar', 'ginger jar', 'storage jar', 'covered jar', 'lidded jar', 'tobacco jar'],
             'plate': ['plate', 'dish', 'charger', 'saucer', 'platter'],
             'cup': ['cup', 'tea cup', 'wine cup', 'stem cup', 'beaker', 'teacup'],
@@ -86,10 +145,10 @@ class KeywordDictionary:
             'box': ['box', 'covered box', 'seal box', 'cosmetic box', 'container'],
             'censer': ['censer', 'incense burner', 'tripod censer', 'brazier'],
             'ewer': ['ewer', 'wine ewer', 'water ewer', 'spouted vessel', 'pitcher'],
-            'tile': ['tile', 'wall tile', 'floor tile', 'decorative tile']  # 添加瓷砖（代尔夫特特色）
+            'tile': ['tile', 'wall tile', 'floor tile', 'decorative tile']  # Added tile (Delft characteristic)
         }
         
-        # 功能关键词
+        # Function keywords for usage categories
         self.function_keywords = {
             'tea': ['tea', 'tea bowl', 'teapot', 'tea cup', 'tea ceremony', 'tea service'],
             'wine': ['wine', 'wine cup', 'wine pot', 'wine vessel', 'drinking'],
@@ -100,18 +159,19 @@ class KeywordDictionary:
             'scholarly': ['scholar', 'study', 'desk', 'brush', 'ink', 'literati', 'studio', 'writing'],
             'cosmetic': ['cosmetic', 'powder', 'rouge', 'mirror', 'toiletry', 'makeup'],
             'export': ['export', 'trade', 'commercial', 'overseas', 'maritime', 'shipping', 'canton'],
-            'pharmaceutical': ['pharmaceutical', 'apothecary', 'medicine', 'drug jar']  # 添加药用（代尔夫特特色）
+            'pharmaceutical': ['pharmaceutical', 'apothecary', 'medicine', 'drug jar']  # Added pharmaceutical (Delft specialty)
         }
         
-        # 材质关键词
+        # Material keywords for composition
         self.material_keywords = {
-            'porcelain': ['porcelain', 'hard-paste', 'soft-paste', 'high-fired', 'paste porcelain', 'chinese porcelain'],
+            'porcelain': ['porcelain', 'hard-paste', 'soft-paste', 'high-fired', 'paste porcelain', 
+                         'chinese porcelain'],
             'stoneware': ['stoneware', 'stone ware', 'proto-porcelain'],
             'earthenware': ['earthenware', 'pottery', 'terracotta', 'ceramics', 'faience', 'delftware'],
             'ceramic': ['ceramic', 'pottery']
         }
         
-        # 釉色技术关键词
+        # Glaze technique keywords
         self.glaze_keywords = {
             'celadon': ['celadon', 'longquan', 'guan', 'ge', 'greenware', 'yue ware', 'ru ware'],
             'blue_white': ['blue and white', 'underglaze blue', 'cobalt', 'qinghua', 'ming blue', 'delft blue'],
@@ -129,9 +189,9 @@ class KeywordDictionary:
                         'fayence', 'zinnglasur', 'galleyware', 'galliware', 'delftware']
         }
         
-        # 生产地关键词 - 大幅扩展
+        # Production location keywords - Extensively expanded for global coverage
         self.production_keywords = {
-            # 中国产地
+            # Chinese production centers
             'jingdezhen': ['jingdezhen', 'jiangxi', 'imperial kiln', 'porcelain capital', 'ching-te-chen'],
             'longquan': ['longquan', 'zhejiang', 'longquan kiln'],
             'dehua': ['dehua', 'fujian', 'blanc de chine', 'white porcelain', 'te-hua'],
@@ -142,48 +202,45 @@ class KeywordDictionary:
             'yaozhou': ['yaozhou', 'shaanxi', 'yaozhou kiln'],
             'china': ['china', 'chinese', 'middle kingdom', 'zhongguo', 'chine', 'cina', 'kina'],
             
-            # 荷兰产地
+            # Dutch production centers (extensive Delft coverage)
             'delft': ['delft', 'delftware', 'delfts', 'delftse', 'hollants porceleyn', 'dutch delft', 
                      'de porceleyne fles', 'de grieksche a', 'de witte ster', 'royal delft',
-                     'de delftse pauw', 'delft pottery', 'delfts blauw'],
+                     'de delftse pauw', 'delft pottery', 'delfts blauw', 'delft blue',
+                     'tin glaze', 'tin-glaze', 'tin glazed', 'tin-glazed',  # Tin glaze related
+                     'faience', 'faïence', 'plateel',  # European tin-glazed pottery
+                     'galleyware', 'galliware',  # British terminology
+                     'maiolica', 'majolica',  # Italian tin-glazed pottery
+                     'dutch blue and white', 'dutch blue white',  # Dutch blue and white
+                     'tin glazuur', 'tinglazuur'],  # Dutch tin glaze terms
             'amsterdam': ['amsterdam', 'amsterdamse'],
             'rotterdam': ['rotterdam', 'rotterdamse'],
             'haarlem': ['haarlem', 'haarlemse'],
             'makkum': ['makkum', 'tichelaar', 'friesland'],
             'netherlands': ['netherlands', 'dutch', 'holland', 'nederlandse', 'hollandse', 'nederland'],
             
-            # 比利时产地
+            # Belgian production centers
             'belgium': ['belgium', 'belgian', 'belgique', 'belgie', 'belgisch'],
             'brussels': ['brussels', 'bruxelles', 'brussel'],
             'antwerp': ['antwerp', 'antwerpen', 'anvers'],
             'tournai': ['tournai', 'doornik'],
             'ghent': ['ghent', 'gent', 'gand'],
             
-            # 其他欧洲产地
+            # Other European production centers
             'meissen': ['meissen', 'dresden', 'saxony'],
             'sevres': ['sevres', 'vincennes'],
             'worcester': ['worcester', 'dr wall'],
             'staffordshire': ['staffordshire', 'stoke on trent'],
             
-            # 出口和贸易相关
+            # Export and trade related
             'export': ['export', 'canton', 'guangzhou', 'trade port', 'chinese export', 'export porcelain'],
-
-            # 在 production_keywords 中扩展 delft 相关关键词
-            'delft': ['delft', 'delftware', 'delfts', 'delftse', 'hollants porceleyn', 'dutch delft', 
-                    'de porceleyne fles', 'de grieksche a', 'de witte ster', 'royal delft',
-                    'de delftse pauw', 'delft pottery', 'delfts blauw', 'delft blue',
-                    'tin glaze', 'tin-glaze', 'tin glazed', 'tin-glazed',  # 锡釉相关
-                    'faience', 'faïence', 'plateel',  # 欧洲锡釉陶
-                    'galleyware', 'galliware',  # 英国称呼
-                    'maiolica', 'majolica',  # 意大利锡釉陶
-                    'dutch blue and white', 'dutch blue white',  # 荷兰蓝白瓷
-                    'tin glazuur', 'tinglazuur'],  # 荷兰语锡釉
         }
         
-        # 朝代/时期关键词 - 增加年份对应
+        # Historical period/dynasty keywords with year mappings
         self.period_keywords = {
+            # Chinese dynasties with reign periods
             'tang': ['tang', 'tang dynasty', '618-907', '7th century', '8th century', '9th century'],
-            'song': ['song', 'northern song', 'southern song', 'song dynasty', '960-1279', '10th century', '11th century', '12th century', '13th century'],
+            'song': ['song', 'northern song', 'southern song', 'song dynasty', '960-1279', 
+                    '10th century', '11th century', '12th century', '13th century'],
             'yuan': ['yuan', 'mongol', 'yuan dynasty', '1279-1368', '13th century', '14th century'],
             'ming': ['ming', 'hongwu', 'yongle', 'xuande', 'chenghua', 'zhengde', 
                     'jiajing', 'wanli', 'tianqi', 'chongzhen', 'ming dynasty', '1368-1644',
@@ -194,77 +251,110 @@ class KeywordDictionary:
             'republic': ['republic', 'minguo', 'republic of china', '1912-1949'],
             'modern': ['modern', 'contemporary', '20th century', '21st century', '1900s', '2000s'],
             
-            # 欧洲时期
+            # European periods specific to pottery
             'delft_golden_age': ['1640-1740', 'dutch golden age', '17th century delft', '18th century delft'],
             'delft_revival': ['1870-1920', 'delft revival', 'new delft', 'art nouveau delft']
         }
         
-       # 更新 place_normalization 字典，添加更多布鲁塞尔变体
+        # Place name normalization dictionary for multi-language support
+        # Maps standard names to all known language variants
         self.place_normalization = {
-            # 中国变体
+            # China variants across languages
             'china': ['china', 'chine', 'cina', 'kina', 'kitajska', 'txina', 'kína', 'ķīna', 'kiina', 'hiina',
                     'čína', 'síne', 'xina', 'kinijos', 'chinese', 'chińska', 'ljudska republika kitajska',
                     'txinako herri errepublika', 'repubblika tal-poplu taċ-ċina', 'λαϊκή δημοκρατία της κίνας',
                     'daon-phoblacht na síne', 'república popular de la xina', 'kinijos liaudies respublika',
                     '中国', 'zhongguo', 'middle kingdom', 'китай'],
             
-            # 维也纳变体（奥地利）- 注意：这可能是博物馆位置而非生产地
+            # Vienna variants (Austria) - Note: Often a museum location rather than production site
             'vienna': ['vienna', 'wien', 'viena', 'viin', 'viedeň', 'виена', 'bécs', 'vienne'],
             
-            # 荷兰变体
+            # Netherlands variants
             'netherlands': ['netherlands', 'nederland', 'holland', 'pays-bas', 'niederlande', 'olanda',
                         'países bajos', 'países baixos', 'paesi bassi', 'holandia', 'hollanda'],
             
-            # 比利时变体
+            # Belgium variants
             'belgium': ['belgium', 'belgique', 'belgië', 'belgien', 'bélgica', 'belgio', 'belgia'],
             
-            # 布鲁塞尔的所有变体
+            # Brussels variants (all linguistic variations)
             'brussels': ['brussels', 'bruxelles', 'brussel', 'an bhruiséil', 'brisele', 'briseles',
                         'briuselio', 'briuselis', 'bruksela', 'brusel', 'brusela', 'brüssel'],
             
-            # 英国变体
+            # United Kingdom variants
             'united_kingdom': ['united kingdom', 'uk', 'britain', 'great britain', 'england',
                             'an ríocht aontaithe', 'apvienotā karaliste', 'egyesült királyság',
                             'erresuma batua', 'regatul unit'],
             
-            # 日本变体
+            # Japan variants
             'japan': ['japan', 'nippon', 'an tseapáin', '日本']
         }
     
-   # 在 keyword_dictionary.py 中更新 normalize_place 方法和添加新的映射
-
     def normalize_place(self, place: str) -> str:
-        """标准化产地名称"""
+        """
+        Normalize place names across different languages and variations
+        
+        This method handles:
+        - Multi-language place name variations
+        - Museum location filtering (not production places)
+        - Standardization to consistent naming conventions
+        - Length validation to filter out invalid entries
+        
+        Args:
+            place: Raw place name string in any language
+            
+        Returns:
+            Normalized place name or None if invalid/museum location
+            
+        Example:
+            >>> dict.normalize_place("Bruxelles")
+            'brussels'
+            >>> dict.normalize_place("Museum of Vienna")
+            None  # Filtered as museum location
+        """
         if not place:
             return place
             
         place_lower = place.lower().strip()
         
-        # 过滤掉博物馆和机构名称
+        # Filter out museum and institution names (not production locations)
         museum_keywords = ['museum', 'gallery', 'collection', 'hallwyl', 'herstellung', 'manufacture']
         if any(keyword in place_lower for keyword in museum_keywords):
             return None
         
-        # 检查是否匹配任何标准化映射
+        # Check against standardized place name mappings
         for standard_name, variants in self.place_normalization.items():
             for variant in variants:
                 if variant in place_lower:
                     return standard_name
         
-        # 检查具体产地
+        # Check against specific production location keywords
         for place_type, keywords in self.production_keywords.items():
             for keyword in keywords:
                 if keyword.lower() in place_lower:
                     return place_type
         
-        # 如果都不匹配，返回原值（如果不是太长）
+        # Filter out overly long strings (likely not valid place names)
         if len(place) > 50:
             return None
             
         return place
         
     def get_dynasty_from_year(self, year: int) -> str:
-        """根据年份返回对应的朝代"""
+        """
+        Convert a year to its corresponding Chinese dynasty
+        
+        Args:
+            year: Year as integer (e.g., 1500)
+            
+        Returns:
+            Dynasty name as string (e.g., 'Ming')
+            
+        Example:
+            >>> dict.get_dynasty_from_year(1500)
+            'Ming'
+            >>> dict.get_dynasty_from_year(1700)
+            'Qing'
+        """
         if 618 <= year <= 907:
             return 'Tang'
         elif 960 <= year <= 1279:
@@ -283,8 +373,22 @@ class KeywordDictionary:
             return 'Unknown'
     
     def get_century_from_year(self, year: int) -> str:
-        """根据年份返回世纪"""
+        """
+        Convert a year to its century in ordinal format
+        
+        Args:
+            year: Year as integer
+            
+        Returns:
+            Century as string with ordinal suffix (e.g., '16th century')
+            
+        Example:
+            >>> dict.get_century_from_year(1650)
+            '17th century'
+        """
         century = (year - 1) // 100 + 1
+        
+        # Handle ordinal suffixes correctly
         if century == 1:
             return "1st century"
         elif century == 2:
@@ -295,28 +399,57 @@ class KeywordDictionary:
             return f"{century}th century"
     
     def add_keyword(self, category: str, key: str, keywords: List[str]):
-        """添加关键词到指定类别"""
+        """
+        Add keywords to a specified category
+        
+        Args:
+            category: Category name (e.g., 'color', 'shape', 'material')
+            key: Subcategory key (e.g., 'blue and white', 'vase')
+            keywords: List of new keywords to add
+            
+        Example:
+            >>> dict.add_keyword('color', 'blue and white', ['kraak', 'transitional'])
+        """
         category_dict = getattr(self, f"{category}_keywords", None)
         if category_dict is not None:
             if key in category_dict:
                 category_dict[key].extend(keywords)
-                category_dict[key] = list(set(category_dict[key]))  # 去重
+                # Remove duplicates while preserving order
+                category_dict[key] = list(set(category_dict[key]))
             else:
                 category_dict[key] = keywords
     
     def remove_keyword(self, category: str, key: str, keywords: List[str]):
-        """从指定类别移除关键词"""
+        """
+        Remove keywords from a specified category
+        
+        Args:
+            category: Category name
+            key: Subcategory key
+            keywords: List of keywords to remove
+        """
         category_dict = getattr(self, f"{category}_keywords", None)
         if category_dict is not None and key in category_dict:
             category_dict[key] = [k for k in category_dict[key] if k not in keywords]
     
     def update_category(self, category: str, new_dict: Dict[str, List[str]]):
-        """更新整个类别的关键词字典"""
+        """
+        Replace entire category dictionary with new mappings
+        
+        Args:
+            category: Category name to update
+            new_dict: New dictionary of keyword mappings
+        """
         if hasattr(self, f"{category}_keywords"):
             setattr(self, f"{category}_keywords", new_dict)
     
     def get_all_keywords(self) -> Dict[str, Dict[str, List[str]]]:
-        """获取所有关键词字典"""
+        """
+        Get all keyword dictionaries as a single structure
+        
+        Returns:
+            Dictionary containing all keyword categories and their mappings
+        """
         return {
             'color': self.color_keywords,
             'decoration_themes': self.decoration_themes,
@@ -329,16 +462,32 @@ class KeywordDictionary:
         }
     
     def save_to_file(self, filename: str):
-        """保存关键词字典到文件"""
+        """
+        Save keyword dictionaries to JSON file
+        
+        Args:
+            filename: Path to output JSON file
+        """
         with open(filename, 'w', encoding='utf-8') as f:
             json.dump(self.get_all_keywords(), f, ensure_ascii=False, indent=2)
     
     def load_from_file(self, filename: str):
-        """从文件加载关键词字典"""
+        """
+        Load keyword dictionaries from JSON file
+        
+        Args:
+            filename: Path to input JSON file
+            
+        Note:
+            File should contain a JSON object with keys matching category names
+            (color, decoration_themes, shape, etc.) and values as dictionaries
+            of keyword mappings.
+        """
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 
+            # Load each category from the JSON data
             self.color_keywords = data.get('color', {})
             self.decoration_themes = data.get('decoration_themes', {})
             self.shape_keywords = data.get('shape', {})
@@ -348,6 +497,6 @@ class KeywordDictionary:
             self.production_keywords = data.get('production', {})
             self.period_keywords = data.get('period', {})
             
-            print(f"✅ 从 {filename} 加载关键词字典成功")
+            print(f"✅ Successfully loaded keyword dictionary from {filename}")
         except Exception as e:
-            print(f"❌ 加载关键词字典失败: {e}")
+            print(f"❌ Failed to load keyword dictionary: {e}")
