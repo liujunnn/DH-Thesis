@@ -1,12 +1,50 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+DataMapper Module for Cultural Heritage Metadata Extraction
+
+This module provides functionality to extract, normalize, and map metadata
+from cultural heritage items (primarily ceramics and pottery) stored in
+digital collections. It processes raw metadata from sources like Europeana
+and transforms it into structured, searchable metadata following a custom
+schema.
+
+Key Features:
+- Multi-language period/dynasty extraction
+- Production place normalization
+- Decoration and pattern recognition
+- Material and glaze identification
+- Quality scoring for metadata completeness
+
+Author: [Your Name]
+Date: [Current Date]
+Version: 1.0
+"""
+
 import re
 from typing import Dict, List, Any, Union, Tuple  # Import Tuple for type hints
 from datetime import datetime
 import json
 
 class DataMapper:
-    """Data mapper for extracting and mapping metadata from cultural heritage items"""
+    """
+    Data mapper for extracting and mapping metadata from cultural heritage items
+    
+    This class provides methods to extract structured information from 
+    unstructured or semi-structured cultural heritage metadata, particularly
+    focusing on ceramics, pottery, and porcelain items.
+    
+    Attributes:
+        keyword_dict: A KeywordDictionary instance containing mappings for:
+            - color_keywords: Color name mappings
+            - decoration_themes: Decoration pattern mappings
+            - shape_keywords: Shape and form mappings
+            - function_keywords: Functional use mappings
+            - material_keywords: Material composition mappings
+            - glaze_keywords: Glaze type mappings
+            - production_keywords: Production location mappings
+            - period_keywords: Historical period/dynasty mappings
+    """
     
     def __init__(self, keyword_dict):
         """
@@ -43,11 +81,20 @@ class DataMapper:
         """
         Extract color information from text using keyword matching
         
+        This method identifies color references in the text, including:
+        - Basic colors (red, blue, green, etc.)
+        - Specific ceramic glazes (celadon, sang de boeuf, etc.)
+        - Cultural color terms (qingbai, tianqing, etc.)
+        
         Args:
-            text: Input text to analyze
+            text: Input text to analyze for color information
             
         Returns:
             List of unique color names found in the text
+            
+        Example:
+            >>> mapper.extract_colored_drawing("A blue and white porcelain vase")
+            ['blue', 'white']
         """
         if not text:
             return []
@@ -56,14 +103,16 @@ class DataMapper:
         colors_found = []
         
         # Search for color keywords in the text
+        # The keyword_dict contains both Western and Eastern color terminology
         for color_name, keywords in self.keyword_dict.color_keywords.items():
             for keyword in keywords:
-                # Use word boundaries to ensure exact matches
+                # Use word boundaries (\b) to ensure exact matches
+                # re.escape() handles special regex characters in keywords
                 if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower):
                     colors_found.append(color_name)
-                    break
+                    break  # One match per color category is sufficient
         
-        # Return unique color names
+        # Return unique color names to avoid duplicates
         return list(set(colors_found))
     
     def extract_decorations(self, text: str) -> List[str]:
@@ -249,39 +298,63 @@ class DataMapper:
         """
         Extract production place information from item metadata and text
         
+        This method employs multiple strategies to identify production locations:
+        1. Direct extraction from metadata fields (edmPlaceLabel, origin, etc.)
+        2. Text analysis for place names and production centers
+        3. Pattern matching for specific pottery traditions (Delftware, etc.)
+        4. Normalization and deduplication of place names
+        5. Priority-based ordering for relevance
+        
+        Special handling for:
+        - European pottery centers (Delft, Meissen, Sèvres)
+        - Chinese kilns (Jingdezhen, Longquan, etc.)
+        - Museum locations (filtered out as they're not production places)
+        
         Args:
-            item: Dictionary containing item metadata
-            text: Description text to analyze
+            item: Dictionary containing item metadata with potential place fields
+            text: Description text to analyze for production information
             
         Returns:
-            List of production places (limited to 10 items)
+            List of production places, prioritized and limited to 10 items
+            
+        Example:
+            >>> mapper.extract_production_place(
+            ...     {'edmPlaceLabel': ['Delft']}, 
+            ...     "Dutch Delftware plate"
+            ... )
+            ['delft', 'netherlands']
         """
         places = []
         normalized_places = set()
         
         # 1. Extract from dedicated place fields in metadata
+        # These fields commonly contain production location information
         place_fields = ['edmPlaceLabel', 'placeLabel', 'place', 'origin', 'provenance', 'production']
         for field in place_fields:
             if field in item:
                 place_data = item[field]
                 if isinstance(place_data, list):
+                    # Handle list of places
                     for p in self._flatten_list(place_data):
                         if p and isinstance(p, str):
-                            # Handle dictionary format like {'def': 'place_name'}
+                            # Handle JSON-like dictionary format {'def': 'place_name'}
+                            # This format is common in Europeana data
                             if p.startswith('{') and 'def' in p:
                                 try:
                                     p_dict = json.loads(p.replace("'", '"'))
                                     if 'def' in p_dict:
                                         p = p_dict['def']
                                 except:
-                                    pass
+                                    pass  # If parsing fails, use original string
                             
                             # Normalize place names using keyword dictionary
+                            # This handles variations like "Delft" -> "delft"
                             normalized = self.keyword_dict.normalize_place(p)
-                            if normalized and len(normalized) < 50:
+                            if normalized and len(normalized) < 50:  # Filter out overly long strings
                                 normalized_places.add(normalized)
                                 
                 elif isinstance(place_data, str) and place_data:
+                    # Handle single place string
                     normalized = self.keyword_dict.normalize_place(place_data)
                     if normalized and len(normalized) < 50:
                         normalized_places.add(normalized)
@@ -716,37 +789,89 @@ class DataMapper:
         """
         Process a single data item to generate complete mapped structure
         
+        This is the main entry point for processing individual items. It orchestrates
+        all extraction methods to create a comprehensive metadata record following
+        the target schema structure.
+        
+        The resulting structure includes:
+        - DescriptiveMetadata: Visual and physical characteristics
+        - Metadata_for_Management: Administrative and temporal information
+        - ExtendedMetadata: Digital asset and provenance information
+        - ProcessingMetadata: Processing timestamp and quality metrics
+        
         Args:
-            item: Dictionary containing item metadata
-            text: Combined text for analysis
-            lda_topics: Optional LDA topic analysis results
+            item: Dictionary containing raw item metadata from source system
+            text: Combined text content for analysis (descriptions, titles, etc.)
+            lda_topics: Optional LDA (Latent Dirichlet Allocation) topic analysis 
+                       results for thematic classification
             
         Returns:
-            Dictionary with complete mapped metadata structure
+            Dictionary with complete mapped metadata structure, or error structure
+            if processing fails
+            
+        Example:
+            >>> result = mapper.process_item(
+            ...     {'id': '123', 'dcTitle': 'Ming Vase', ...},
+            ...     'Blue and white porcelain vase from Ming dynasty',
+            ...     [{'topic': 'ceramics', 'score': 0.8}]
+            ... )
+            >>> print(result['DescriptiveMetadata']['ColoredDrawing'])
+            ['blue', 'white']
+            
+        Error Handling:
+            If processing fails, returns a minimal structure with error information
+            in the ProcessingMetadata field rather than raising an exception.
         """
         try:
-            # Build complete result structure
+            # Build complete result structure by calling specialized mapping methods
             result = {
-                'id': item.get('id', ''),
+                'id': item.get('id', ''),  # Preserve original identifier
+                
+                # Extract descriptive characteristics (colors, shapes, materials, etc.)
                 'DescriptiveMetadata': self.map_to_descriptive_metadata(item, text, lda_topics),
+                
+                # Extract administrative metadata (titles, periods, institutions)
                 'Metadata_for_Management': self.map_to_management_metadata(item),
+                
+                # Extract digital and provenance information
                 'ExtendedMetadata': self.map_to_extended_metadata(item),
+                
+                # Add processing metadata for quality control and auditing
                 'ProcessingMetadata': {
-                    'processed_date': datetime.now().isoformat(),
-                    'preprocessing_metadata': item.get('preprocessing_metadata', {})
+                    'processed_date': datetime.now().isoformat(),  # ISO 8601 format
+                    'preprocessing_metadata': item.get('preprocessing_metadata', {}),
+                    'processing_version': '1.0',  # Track schema/processing version
+                    'source_system': item.get('source', 'unknown')  # Track data source
                 }
             }
+            
+            # Add success flag for downstream processing
+            result['ProcessingMetadata']['status'] = 'success'
+            
             return result
+            
         except Exception as e:
-            # Handle processing errors gracefully
+            # Handle processing errors gracefully without breaking the pipeline
+            # This ensures batch processing can continue even if individual items fail
+            
+            import traceback
+            error_details = {
+                'error_message': str(e),
+                'error_type': type(e).__name__,
+                'traceback': traceback.format_exc()  # Full stack trace for debugging
+            }
+            
             print(f"Error processing item {item.get('id', 'unknown')}: {e}")
+            
+            # Return minimal valid structure with error information
             return {
                 'id': item.get('id', ''),
-                'DescriptiveMetadata': {},
+                'DescriptiveMetadata': {},  # Empty but valid structure
                 'Metadata_for_Management': {},
                 'ExtendedMetadata': {},
                 'ProcessingMetadata': {
                     'processed_date': datetime.now().isoformat(),
-                    'error': str(e)
+                    'status': 'error',
+                    'error': error_details
                 }
             }
