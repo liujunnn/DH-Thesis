@@ -1,28 +1,37 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-数据映射模块 - 优化版
-功能：提取字段信息，映射到目标数据结构
-增强：更好的产地和时期信息提取
-"""
-
 import re
-from typing import Dict, List, Any, Union, Tuple  # 添加Tuple导入
+from typing import Dict, List, Any, Union, Tuple  # Import Tuple for type hints
 from datetime import datetime
 import json
 
 class DataMapper:
-    """数据映射器"""
+    """Data mapper for extracting and mapping metadata from cultural heritage items"""
     
     def __init__(self, keyword_dict):
+        """
+        Initialize the DataMapper with a keyword dictionary
+        
+        Args:
+            keyword_dict: Dictionary containing keyword mappings for various attributes
+        """
         self.keyword_dict = keyword_dict
     
     def _flatten_list(self, lst: Union[List, Any]) -> List[str]:
-        """递归展平嵌套列表"""
+        """
+        Recursively flatten nested lists into a single-level list of strings
+        
+        Args:
+            lst: Input list or value to flatten
+            
+        Returns:
+            List of strings with all nested elements flattened
+        """
         result = []
         if isinstance(lst, list):
             for item in lst:
                 if isinstance(item, list):
+                    # Recursively flatten nested lists
                     result.extend(self._flatten_list(item))
                 elif item is not None:
                     result.append(str(item))
@@ -31,45 +40,64 @@ class DataMapper:
         return result
     
     def extract_colored_drawing(self, text: str) -> List[str]:
-        """提取颜色信息"""
+        """
+        Extract color information from text using keyword matching
+        
+        Args:
+            text: Input text to analyze
+            
+        Returns:
+            List of unique color names found in the text
+        """
         if not text:
             return []
             
         text_lower = text.lower()
         colors_found = []
         
+        # Search for color keywords in the text
         for color_name, keywords in self.keyword_dict.color_keywords.items():
             for keyword in keywords:
+                # Use word boundaries to ensure exact matches
                 if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower):
                     colors_found.append(color_name)
                     break
         
+        # Return unique color names
         return list(set(colors_found))
     
     def extract_decorations(self, text: str) -> List[str]:
-        """提取装饰信息"""
+        """
+        Extract decoration information including themes, patterns, and motifs
+        
+        Args:
+            text: Input text to analyze
+            
+        Returns:
+            List of decoration descriptions (limited to 15 items)
+        """
         if not text:
             return []
             
         text_lower = text.lower()
         decorations = []
         
-        # 提取装饰主题
+        # Extract decoration themes from keyword dictionary
         for theme, keywords in self.keyword_dict.decoration_themes.items():
             theme_decorations = []
             for keyword in keywords:
                 if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower):
                     theme_decorations.append(keyword)
             
-            # 只保留每个主题最多3个关键词
+            # Limit to 3 keywords per theme to avoid redundancy
             for keyword in theme_decorations[:3]:
                 decorations.append(f"{theme}:{keyword}")
         
-        # 提取颜色作为装饰的一部分
+        # Include colors as part of decoration metadata
         colors = self.extract_colored_drawing(text)
         decorations.extend([f"color:{c}" for c in colors])
         
-        # 使用正则表达式提取特定装饰模式
+        # Use regex patterns to extract specific decoration descriptions
         decoration_patterns = [
             (r'decorated with ([\w\s,]+?)(?:\.|,|;|and)', 'decorated'),
             (r'depicting ([\w\s,]+?)(?:\.|,|;|and)', 'depicting'),
@@ -79,13 +107,14 @@ class DataMapper:
             (r'pattern of ([\w\s,]+?)(?:\.|,|;|and)', 'pattern')
         ]
         
+        # Extract decoration patterns from text
         for pattern, prefix in decoration_patterns:
             matches = re.findall(pattern, text_lower)
-            for match in matches[:2]:
-                if len(match) < 50:
+            for match in matches[:2]:  # Limit to 2 matches per pattern
+                if len(match) < 50:  # Filter out overly long descriptions
                     decorations.append(f"{prefix}:{match.strip()}")
         
-        # 去重并限制总数
+        # Remove duplicates while preserving order
         unique_decorations = []
         seen = set()
         for dec in decorations:
@@ -94,10 +123,19 @@ class DataMapper:
                 unique_decorations.append(dec)
                 seen.add(dec_lower)
         
+        # Return up to 15 unique decorations
         return unique_decorations[:15]
     
     def extract_shape(self, text: str) -> List[str]:
-        """提取形状信息"""
+        """
+        Extract shape information from text
+        
+        Args:
+            text: Input text to analyze
+            
+        Returns:
+            List of shape descriptions (limited to 5 items)
+        """
         if not text:
             return []
             
@@ -105,49 +143,70 @@ class DataMapper:
         shapes_found = []
         shape_details = []
         
+        # Match shape keywords from dictionary
         for shape_type, keywords in self.keyword_dict.shape_keywords.items():
             for keyword in keywords:
                 if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower):
                     shapes_found.append(shape_type)
+                    # Capture specific shape details if different from main type
                     if keyword != shape_type:
                         shape_details.append(keyword)
         
-        # 合并结果
+        # Combine and deduplicate results
         result = list(set(shapes_found))
         result.extend([d for d in set(shape_details) if d not in result])
         
+        # Return up to 5 shape descriptors
         return result[:5]
     
     def extract_function(self, text: str) -> List[str]:
-        """提取功能信息"""
+        """
+        Extract functional information about the item
+        
+        Args:
+            text: Input text to analyze
+            
+        Returns:
+            List of unique function types
+        """
         if not text:
             return []
             
         text_lower = text.lower()
         functions_found = []
         
+        # Match function keywords from dictionary
         for function_type, keywords in self.keyword_dict.function_keywords.items():
             for keyword in keywords:
                 if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower):
                     functions_found.append(function_type)
-                    break
+                    break  # Only need one match per function type
         
         return list(set(functions_found))
     
     def extract_material(self, text: str) -> List[str]:
-        """提取材质信息"""
+        """
+        Extract material composition information
+        
+        Args:
+            text: Input text to analyze
+            
+        Returns:
+            List of unique material types
+        """
         if not text:
             return []
             
         text_lower = text.lower()
         materials_found = []
         
+        # Match material keywords from dictionary
         for material_type, keywords in self.keyword_dict.material_keywords.items():
             for keyword in keywords:
                 if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower):
                     materials_found.append(material_type)
         
-        # 默认材质推断
+        # Apply default material inference if no explicit materials found
         if not materials_found:
             if any(word in text_lower for word in ['ceramic', 'pottery', 'clay']):
                 materials_found.append('ceramic')
@@ -157,29 +216,50 @@ class DataMapper:
         return list(set(materials_found))
     
     def extract_glaze(self, text: str) -> List[str]:
-        """提取釉色信息"""
+        """
+        Extract glaze type and color information
+        
+        Args:
+            text: Input text to analyze
+            
+        Returns:
+            List of glaze types (limited to 5 items)
+        """
         if not text:
             return []
             
         text_lower = text.lower()
         glazes_found = []
         
+        # Match glaze keywords from dictionary
         for glaze_type, keywords in self.keyword_dict.glaze_keywords.items():
             for keyword in keywords:
                 if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower):
+                    # Normalize underscores to spaces in glaze type names
                     normalized_type = glaze_type.replace('_', ' ')
                     glazes_found.append(normalized_type)
+                    # Include specific keyword if different from normalized type
                     if keyword != glaze_type and keyword != normalized_type:
                         glazes_found.append(keyword)
         
+        # Return up to 5 unique glaze types
         return list(set(glazes_found))[:5]
     
     def extract_production_place(self, item: Dict[str, Any], text: str) -> List[str]:
-        """提取生产地信息 - 修复版"""
+        """
+        Extract production place information from item metadata and text
+        
+        Args:
+            item: Dictionary containing item metadata
+            text: Description text to analyze
+            
+        Returns:
+            List of production places (limited to 10 items)
+        """
         places = []
         normalized_places = set()
         
-        # 1. 从专门的地点字段提取
+        # 1. Extract from dedicated place fields in metadata
         place_fields = ['edmPlaceLabel', 'placeLabel', 'place', 'origin', 'provenance', 'production']
         for field in place_fields:
             if field in item:
@@ -187,7 +267,7 @@ class DataMapper:
                 if isinstance(place_data, list):
                     for p in self._flatten_list(place_data):
                         if p and isinstance(p, str):
-                            # 处理字典格式 {'def': 'place_name'}
+                            # Handle dictionary format like {'def': 'place_name'}
                             if p.startswith('{') and 'def' in p:
                                 try:
                                     p_dict = json.loads(p.replace("'", '"'))
@@ -196,7 +276,7 @@ class DataMapper:
                                 except:
                                     pass
                             
-                            # 标准化地名
+                            # Normalize place names using keyword dictionary
                             normalized = self.keyword_dict.normalize_place(p)
                             if normalized and len(normalized) < 50:
                                 normalized_places.add(normalized)
@@ -207,24 +287,24 @@ class DataMapper:
                         normalized_places.add(normalized)
                         
                 elif isinstance(place_data, dict) and 'def' in place_data:
-                    # 直接处理字典格式
+                    # Handle direct dictionary format
                     p = place_data['def']
                     normalized = self.keyword_dict.normalize_place(p)
                     if normalized and len(normalized) < 50:
                         normalized_places.add(normalized)
         
-        # 2. 从文本中提取产地信息
+        # 2. Extract production place from text content
         if text:
             text_lower = text.lower()
             
-            # 检查各个产地关键词
+            # Check production place keywords
             for place_type, keywords in self.keyword_dict.production_keywords.items():
                 for keyword in keywords:
                     if re.search(r'\b' + re.escape(keyword) + r'\b', text_lower):
                         normalized_places.add(place_type)
                         break
             
-            # 特殊模式识别
+            # Special pattern recognition for Delftware
             delft_patterns = [
                 r'delft(?:ware|se?)?',
                 r'dutch\s+(?:delft|pottery|ceramic)',
@@ -236,10 +316,10 @@ class DataMapper:
             for pattern in delft_patterns:
                 if re.search(pattern, text_lower):
                     normalized_places.add('delft')
-                    # 不再自动添加 netherlands，避免重复计数
+                    # Avoid double counting by not automatically adding netherlands
                     break
             
-            # 比利时模式
+            # Belgian pottery patterns
             belgian_patterns = [
                 r'belgian\s+(?:pottery|ceramic|porcelain)',
                 r'brussels\s+(?:pottery|ceramic)',
@@ -252,20 +332,20 @@ class DataMapper:
                     normalized_places.add('belgium')
                     break
         
-        # 3. 清理结果
-        # 移除可能的博物馆位置
+        # 3. Clean up results
+        # Remove potential museum locations (not production places)
         museum_locations = ['vienna', 'stockholm', 'london', 'paris', 'new york']
         normalized_places = {p for p in normalized_places if p not in museum_locations}
         
-        # 合并布鲁塞尔变体到比利时
+        # Merge Brussels variants to Belgium
         if 'brussels' in normalized_places:
             normalized_places.add('belgium')
             normalized_places.remove('brussels')
         
-        # 4. 优先级排序
+        # 4. Priority-based sorting
         final_places = []
         
-        # 优先级排序
+        # Define priority order for production places
         priority_order = [
             'jingdezhen', 'delft', 'longquan', 'dehua', 'yixing', 'jun', 'ding', 'cizhou',
             'amsterdam', 'rotterdam', 'haarlem', 'makkum',
@@ -275,34 +355,46 @@ class DataMapper:
             'export'
         ]
         
-        # 先添加高优先级的产地
+        # Add high-priority places first
         for place in priority_order:
             if place in normalized_places:
                 final_places.append(place)
                 normalized_places.remove(place)
         
-        # 添加剩余的产地
+        # Add remaining places in alphabetical order
         final_places.extend(sorted(normalized_places))
         
-        return final_places[:10]  # 限制最多10个产地
-
+        # Return up to 10 production places
+        return final_places[:10]
+    
     def extract_period_info(self, item: Dict[str, Any]) -> Tuple[List[str], List[int], Dict[str, Any]]:
-        """提取时期信息 - 修复版"""
+        """
+        Extract period, dynasty, and dating information from item metadata
+        
+        Args:
+            item: Dictionary containing item metadata
+            
+        Returns:
+            Tuple containing:
+                - List of period/dynasty names
+                - List of years
+                - Dictionary with comprehensive period information
+        """
         periods = []
         years = []
         dynasty_info = {}
         
-        # 1. 从Period字段提取
+        # 1. Extract from Period field
         period_data = item.get('Metadata_for_Management', {}).get('Period', '')
         if not period_data and 'edmTimespanLabel' in item:
             period_data = item['edmTimespanLabel']
         
-        # 处理period数据
+        # Process period data into strings
         period_strings = []
         if isinstance(period_data, list):
             for p in period_data:
                 if isinstance(p, str) and p.strip():
-                    # 过滤掉URL和其他无用信息
+                    # Filter out URLs and other non-period information
                     if not p.startswith('http') and not p.startswith('https'):
                         period_strings.append(p.strip())
                 elif isinstance(p, dict) and 'def' in p:
@@ -317,26 +409,25 @@ class DataMapper:
             if not p_str.startswith('http'):
                 period_strings.append(p_str)
         
-        # 2. 解析时期字符串
+        # 2. Parse period strings for years and dynasties
         for period_str in period_strings:
-            # 提取年份
-            # 先尝试提取4位数年份
+            # Extract 4-digit years
             year_matches = re.findall(r'\b(1[0-9]{3}|20[0-2][0-9])\b', period_str)
             for year_str in year_matches:
                 year = int(year_str)
                 if 1000 <= year <= 2025:
                     years.append(year)
             
-            # 提取世纪并转换为年份
+            # Extract centuries and convert to years (using mid-century as representative)
             century_patterns = [
-                (r'\b(\d{1,2})(?:st|nd|rd|th)\s+century\b', 'en'),
-                (r'\b(\d{1,2})[èe]me\s+siècle\b', 'fr'),
-                (r'\b(\d{1,2})\.\s+Jahrhundert\b', 'de'),
-                (r'\b(\d{1,2})[º°]\s+século\b', 'pt'),
-                (r'\b(\d{1,2})\s+век\b', 'ru'),
-                (r'\b(\d{1,2})-luku\b', 'fi'),
-                (r'\b(\d{1,2})\.\s+gadsimts\b', 'lv'),
-                (r'\b(\d{1,2})\s+amžius\b', 'lt'),
+                (r'\b(\d{1,2})(?:st|nd|rd|th)\s+century\b', 'en'),  # English
+                (r'\b(\d{1,2})[èe]me\s+siècle\b', 'fr'),           # French
+                (r'\b(\d{1,2})\.\s+Jahrhundert\b', 'de'),          # German
+                (r'\b(\d{1,2})[º°]\s+século\b', 'pt'),             # Portuguese
+                (r'\b(\d{1,2})\s+век\b', 'ru'),                    # Russian
+                (r'\b(\d{1,2})-luku\b', 'fi'),                     # Finnish
+                (r'\b(\d{1,2})\.\s+gadsimts\b', 'lv'),            # Latvian
+                (r'\b(\d{1,2})\s+amžius\b', 'lt'),                # Lithuanian
             ]
             
             for pattern, lang in century_patterns:
@@ -344,12 +435,12 @@ class DataMapper:
                 for match in matches:
                     century = int(match)
                     if 1 <= century <= 21:
-                        # 使用世纪中期作为代表年份
+                        # Use mid-century year as representative
                         year = (century - 1) * 100 + 50
                         years.append(year)
                         periods.append(f"{century}th century")
             
-            # 提取朝代信息
+            # Extract dynasty information
             period_lower = period_str.lower()
             for dynasty, keywords in self.keyword_dict.period_keywords.items():
                 for keyword in keywords:
@@ -357,7 +448,7 @@ class DataMapper:
                         periods.append(dynasty.capitalize())
                         break
         
-        # 3. 根据年份推断朝代
+        # 3. Infer dynasty from years
         for year in years:
             dynasty = self.keyword_dict.get_dynasty_from_year(year)
             if dynasty != 'Unknown':
@@ -365,13 +456,14 @@ class DataMapper:
                 if dynasty not in periods:
                     periods.append(dynasty)
         
-        # 4. 清理和去重
-        # 移除重复和无效年份
+        # 4. Clean and deduplicate results
+        # Remove duplicate and invalid years
         unique_years = []
         for year in years:
             if 1000 <= year <= 2025 and year not in unique_years:
                 unique_years.append(year)
         
+        # Remove duplicate periods
         unique_periods = []
         seen = set()
         for period in periods:
@@ -379,7 +471,7 @@ class DataMapper:
                 unique_periods.append(period)
                 seen.add(period.lower())
         
-        # 5. 生成综合时期信息
+        # 5. Generate comprehensive period summary
         period_summary = {
             'periods': unique_periods[:5],
             'years': sorted(unique_years)[:10],
@@ -389,16 +481,24 @@ class DataMapper:
         }
         
         return unique_periods, unique_years, period_summary
-
+    
     def extract_inscriptions(self, text: str) -> List[str]:
-        """提取款识信息"""
+        """
+        Extract inscription and mark information from text
+        
+        Args:
+            text: Input text to analyze
+            
+        Returns:
+            List of inscription descriptions (limited to 5 items)
+        """
         if not text:
             return []
             
         text_lower = text.lower()
         inscriptions = []
         
-        # 款识相关关键词
+        # Keywords related to inscriptions and marks
         inscription_keywords = [
             'mark', 'marked', 'inscription', 'inscribed', 'character',
             'seal', 'signature', 'signed', 'reign mark', 'nianzhi',
@@ -406,14 +506,16 @@ class DataMapper:
             'four character', 'seal mark', 'reign title', 'base mark'
         ]
         
+        # Find relevant keywords in text
         found_keywords = []
         for keyword in inscription_keywords:
             if keyword in text_lower:
                 found_keywords.append(keyword)
         
+        # Add up to 3 found keywords
         inscriptions.extend(found_keywords[:3])
         
-        # 尝试提取具体的款识内容
+        # Extract specific inscription content using patterns
         inscription_patterns = [
             (r'mark(?:ed)?\s+(?:of|with|reading)\s+([\w\s]+?)(?:\.|,|;)', 'mark'),
             (r'inscription\s+(?:of|reading)\s+([\w\s]+?)(?:\.|,|;)', 'inscription'),
@@ -422,153 +524,64 @@ class DataMapper:
             (r'signed\s+([\w\s]+?)(?:\.|,|;)', 'signature')
         ]
         
+        # Extract inscription patterns from text
         for pattern, prefix in inscription_patterns:
             matches = re.findall(pattern, text_lower)
-            for match in matches[:2]:
-                if len(match) < 30:
+            for match in matches[:2]:  # Limit to 2 matches per pattern
+                if len(match) < 30:  # Filter out overly long descriptions
                     inscriptions.append(f"{prefix}:{match.strip()}")
         
-        # 检查朝代款识
+        # Check for dynasty-related marks
         for period, keywords in self.keyword_dict.period_keywords.items():
             for keyword in keywords:
                 if keyword in text_lower and 'mark' in text_lower:
                     inscriptions.append(f"period mark:{period}")
                     break
         
+        # Return up to 5 unique inscriptions
         return list(set(inscriptions))[:5]
-    
-    def extract_period_info(self, item: Dict[str, Any]) -> Tuple[List[str], List[int], Dict[str, Any]]:
-        """提取时期信息 - 完全重写"""
-        periods = []
-        years = []
-        dynasty_info = {}
-        
-        # 1. 从Period字段提取
-        period_data = item.get('Metadata_for_Management', {}).get('Period', '')
-        if not period_data and 'edmTimespanLabel' in item:
-            period_data = item['edmTimespanLabel']
-        
-        # 处理period数据
-        period_strings = []
-        if isinstance(period_data, list):
-            for p in period_data:
-                if isinstance(p, str) and p.strip():
-                    # 过滤掉URL和其他无用信息
-                    if not p.startswith('http') and not p.startswith('https'):
-                        period_strings.append(p.strip())
-                elif isinstance(p, dict) and 'def' in p:
-                    p_str = p['def'].strip()
-                    if not p_str.startswith('http'):
-                        period_strings.append(p_str)
-        elif isinstance(period_data, str) and period_data.strip():
-            if not period_data.startswith('http'):
-                period_strings.append(period_data.strip())
-        elif isinstance(period_data, dict) and 'def' in period_data:
-            p_str = period_data['def'].strip()
-            if not p_str.startswith('http'):
-                period_strings.append(p_str)
-        
-        # 2. 解析时期字符串
-        for period_str in period_strings:
-            # 提取年份
-            year_patterns = [
-                r'\b(\d{4})\b',  # 4位数字年份
-                r'\b(\d{1,2})th\s+century\b',  # 世纪
-                r'\b(\d{1,2})[èe]me\s+siècle\b',  # 法语世纪
-                r'\b(\d{1,2})\.\s+Jahrhundert\b',  # 德语世纪
-                r'\b(\d{1,2})[º°]\s+século\b',  # 葡萄牙语世纪
-                r'\b(\d{1,2})\s+век\b',  # 俄语世纪
-                r'\b(\d{1,2})-luku\b',  # 芬兰语世纪
-                r'\b(\d{1,2})\.\s+gadsimts\b',  # 拉脱维亚语世纪
-                r'\b(\d{1,2})\s+amžius\b',  # 立陶宛语世纪
-            ]
-            
-            for pattern in year_patterns:
-                matches = re.findall(pattern, period_str, re.IGNORECASE)
-                for match in matches:
-                    try:
-                        if 'century' in period_str.lower() or 'siècle' in period_str.lower() or \
-                           'jahrhundert' in period_str.lower() or 'século' in period_str.lower() or \
-                           'век' in period_str.lower() or any(suffix in period_str for suffix in ['-luku', 'gadsimts', 'amžius']):
-                            # 世纪转年份（使用世纪中期）
-                            century = int(match)
-                            year = (century - 1) * 100 + 50
-                            years.append(year)
-                            periods.append(f"{century}th century")
-                        else:
-                            # 直接年份
-                            year = int(match)
-                            if 1000 <= year <= 2025:
-                                years.append(year)
-                    except:
-                        pass
-            
-            # 提取朝代信息
-            period_lower = period_str.lower()
-            for dynasty, keywords in self.keyword_dict.period_keywords.items():
-                for keyword in keywords:
-                    if keyword in period_lower:
-                        periods.append(dynasty.capitalize())
-                        break
-        
-        # 3. 根据年份推断朝代
-        for year in years:
-            dynasty = self.keyword_dict.get_dynasty_from_year(year)
-            if dynasty != 'Unknown':
-                dynasty_info[year] = dynasty
-                if dynasty not in periods:
-                    periods.append(dynasty)
-        
-        # 4. 清理和去重
-        unique_periods = []
-        seen = set()
-        for period in periods:
-            if period and period not in seen and len(period) < 50:
-                unique_periods.append(period)
-                seen.add(period.lower())
-        
-        # 5. 生成综合时期信息
-        period_summary = {
-            'periods': unique_periods[:5],
-            'years': sorted(set(years))[:10],
-            'dynasty_mapping': dynasty_info,
-            'century': self.keyword_dict.get_century_from_year(years[0]) if years else None,
-            'date_range': f"{min(years)}-{max(years)}" if len(years) > 1 else str(years[0]) if years else None
-        }
-        
-        return unique_periods, years, period_summary
     
     def map_to_descriptive_metadata(self, item: Dict[str, Any], text: str, 
                                   lda_topics: List[Dict] = None) -> Dict[str, Any]:
-        """映射到描述性元数据结构"""
-        # 安全获取描述
+        """
+        Map item data to descriptive metadata structure
+        
+        Args:
+            item: Dictionary containing item metadata
+            text: Combined text for analysis
+            lda_topics: Optional LDA topic analysis results
+            
+        Returns:
+            Dictionary with descriptive metadata
+        """
+        # Safely extract descriptions
         descriptions = []
         if 'dcDescription' in item:
             desc_data = item['dcDescription']
             descriptions = self._flatten_list(desc_data)
         
-        # 基础描述性元数据
+        # Build descriptive metadata structure
         descriptive_metadata = {
-            'Descriptions': descriptions[:3],
+            'Descriptions': descriptions[:3],  # Limit to 3 descriptions
             'ColoredDrawing': self.extract_colored_drawing(text),
             'Decorations': self.extract_decorations(text),
             'Shape': self.extract_shape(text),
-            'ShapeDescription': [],
+            'ShapeDescription': [],  # Additional shape details can be added here
             'Function': self.extract_function(text),
-            'FunctionCategory': [],
+            'FunctionCategory': [],  # Higher-level function categories can be added
             'Paste': self.extract_material(text),
-            'PasteMaterial': self.extract_material(text),
+            'PasteMaterial': self.extract_material(text),  # Same as Paste for now
             'Glaze': self.extract_glaze(text),
             'ProductionPlace': self.extract_production_place(item, text),
-            'ProductionPlaceLocation': self.extract_production_place(item, text),
+            'ProductionPlaceLocation': self.extract_production_place(item, text),  # Same as ProductionPlace
             'Inscriptions': self.extract_inscriptions(text)
         }
         
-        # 添加LDA主题信息
+        # Add LDA topic information if available
         if lda_topics:
             descriptive_metadata['lda_topics'] = lda_topics
         
-        # 添加提取质量指标
+        # Calculate extraction quality metrics
         extraction_quality = {
             'has_color': len(descriptive_metadata['ColoredDrawing']) > 0,
             'has_decoration': len(descriptive_metadata['Decorations']) > 0,
@@ -580,14 +593,23 @@ class DataMapper:
             'has_inscription': len(descriptive_metadata['Inscriptions']) > 0
         }
         
+        # Add quality metrics to metadata
         descriptive_metadata['extraction_quality'] = extraction_quality
         descriptive_metadata['quality_score'] = sum(extraction_quality.values()) / len(extraction_quality)
         
         return descriptive_metadata
     
     def map_to_management_metadata(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        """映射到管理元数据结构 - 优化版"""
-        # 安全获取标题
+        """
+        Map item data to management metadata structure
+        
+        Args:
+            item: Dictionary containing item metadata
+            
+        Returns:
+            Dictionary with management metadata
+        """
+        # Safely extract title information
         title_value = []
         if 'title' in item:
             if isinstance(item['title'], list):
@@ -600,16 +622,17 @@ class DataMapper:
             elif isinstance(item['dcTitle'], str):
                 title_value = [item['dcTitle']]
         
-        # 提取时期信息
+        # Extract comprehensive period information
         periods, years, period_summary = self.extract_period_info(item)
         
+        # Build management metadata structure
         management_metadata = {
             'Title': title_value,
-            'Used_Titles': [],
+            'Used_Titles': [],  # Alternative titles
             'Identifier': item.get('id', ''),
-            'Period': periods,  # 清理后的时期列表
-            'Years': years,  # 提取的年份
-            'PeriodSummary': period_summary,  # 综合时期信息
+            'Period': periods,  # Cleaned period list
+            'Years': years,  # Extracted years
+            'PeriodSummary': period_summary,  # Comprehensive period information
             'CompletenessLevel': item.get('europeanaCompleteness', 
                                         item.get('completeness', 0)),
             'ProvidingInstitution': item.get('dataProvider', ''),
@@ -624,7 +647,7 @@ class DataMapper:
             }
         }
         
-        # 处理标题变体
+        # Process title variants
         all_titles = []
         
         if 'dcTitle' in item:
@@ -635,7 +658,7 @@ class DataMapper:
             titles = self._flatten_list(item['title'])
             all_titles.extend(titles)
         
-        # 去重
+        # Deduplicate titles
         unique_titles = []
         seen = set()
         for title in all_titles:
@@ -648,16 +671,25 @@ class DataMapper:
         return management_metadata
     
     def map_to_extended_metadata(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        """映射到扩展元数据结构"""
+        """
+        Map item data to extended metadata structure
+        
+        Args:
+            item: Dictionary containing item metadata
+            
+        Returns:
+            Dictionary with extended metadata
+        """
+        # Build extended metadata structure
         extended_metadata = {
-            'RelatedPeople': [],
-            'RelatedCollections': [],
+            'RelatedPeople': [],  # Creators, contributors, etc.
+            'RelatedCollections': [],  # Collection names
             'Digitalization': {
-                'edmIsShownAt': item.get('edmIsShownAt', ''),
-                'edmIsShownBy': item.get('edmIsShownBy', ''),
-                'edmPreview': item.get('edmPreview', '')
+                'edmIsShownAt': item.get('edmIsShownAt', ''),  # Web page URL
+                'edmIsShownBy': item.get('edmIsShownBy', ''),  # Direct media URL
+                'edmPreview': item.get('edmPreview', '')  # Preview image URL
             },
-            'DocumentationsAPI': item.get('link', ''),
+            'DocumentationsAPI': item.get('link', ''),  # API endpoint
             'OriginalData': {
                 'guid': item.get('guid', ''),
                 'europeanaCollectionName': item.get('europeanaCollectionName', ''),
@@ -667,12 +699,12 @@ class DataMapper:
             }
         }
         
-        # 提取相关人员
+        # Extract related people (creators, contributors)
         if 'dcCreator' in item:
             creators = self._flatten_list(item['dcCreator'])
             extended_metadata['RelatedPeople'].extend(creators)
         
-        # 相关收藏
+        # Extract related collections
         if 'europeanaCollectionName' in item:
             collections = self._flatten_list(item['europeanaCollectionName'])
             extended_metadata['RelatedCollections'].extend(collections)
@@ -681,8 +713,19 @@ class DataMapper:
     
     def process_item(self, item: Dict[str, Any], text: str, 
                     lda_topics: List[Dict] = None) -> Dict[str, Any]:
-        """处理单个数据项，生成完整的映射结构"""
+        """
+        Process a single data item to generate complete mapped structure
+        
+        Args:
+            item: Dictionary containing item metadata
+            text: Combined text for analysis
+            lda_topics: Optional LDA topic analysis results
+            
+        Returns:
+            Dictionary with complete mapped metadata structure
+        """
         try:
+            # Build complete result structure
             result = {
                 'id': item.get('id', ''),
                 'DescriptiveMetadata': self.map_to_descriptive_metadata(item, text, lda_topics),
@@ -695,7 +738,8 @@ class DataMapper:
             }
             return result
         except Exception as e:
-            print(f"处理项目时出错 {item.get('id', 'unknown')}: {e}")
+            # Handle processing errors gracefully
+            print(f"Error processing item {item.get('id', 'unknown')}: {e}")
             return {
                 'id': item.get('id', ''),
                 'DescriptiveMetadata': {},
